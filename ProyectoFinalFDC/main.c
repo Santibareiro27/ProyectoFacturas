@@ -5,6 +5,7 @@
 #include "arbol.h"
 
 #ifdef _WIN32
+#include <windows.h>
 #define CLS "cls"
 #else
 #define CLS "clear"
