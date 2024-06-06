@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <conio.h>
 #include <string.h>
+#include "arbol.h"
+
+#ifdef _WIN32
+#define CLS "cls"
+#else
+#define CLS "clear"
+#endif
 
 typedef struct cli cli; 
 //Define nodo de lista (cli)
@@ -11,31 +18,17 @@ struct cli {
 	cli *sig;
 };
 
-typedef struct nodo nodo;
-//Define nodo de arbol
-struct nodo {
-	int plan; //ID de busqueda
-	float precio; //Precio del plan
-	nodo *left;
-	nodo *right;
-};
-
 //Funcion para lipar pantalla
 void CLEAR() {
-	system("cls");
+	system(CLS);
 }
 
 //Funcion que genera una pausa
-void PAUSA() {
+void PAUSE() {
 	printf("\n\nPresione una tecla para continuar...");
 	fflush(stdin);
 	getch();
 	CLEAR();
-}
-
-//Genera arbol de planes
-nodo *GEN_ARBOL() {
-	
 }
 
 /*Genera la lista de clientes a partir
@@ -71,11 +64,12 @@ cli *GEN_LISTA_CLIENTES() {
 void GEN_FACTURAS(nodo *arbol) {
 	cli *clientes = GEN_LISTA_CLIENTES();
 	if(clientes == NULL) {
-		PAUSA();
+		PAUSE();
 		return;
 	}
 	
-	PAUSA();
+	
+	PAUSE();
 }
 
 int main(int argc, char *argv[]) {
@@ -98,6 +92,7 @@ int main(int argc, char *argv[]) {
 			return 0;
 			
 		default:
+			CLEAR();
 			break;
 		}
 	}
