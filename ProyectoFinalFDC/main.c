@@ -34,7 +34,7 @@ void PAUSE() {
 /*Genera la lista de clientes a partir
 de un archivo de texto*/
 cli *GEN_LISTA_CLIENTES() {
-	cli *lista, *nn;
+	cli *lista = NULL, *nn;
 	char linea[64];
 	FILE *arch;
 	if((arch = fopen("Clientes.txt","r")) == 0) {
@@ -60,20 +60,74 @@ cli *GEN_LISTA_CLIENTES() {
 	return lista;
 }
 
-//Genera las facturas de los clientes
-void GEN_FACTURAS(nodo *arbol) {
-	cli *clientes = GEN_LISTA_CLIENTES();
-	if(clientes == NULL) {
-		PAUSE();
-		return;
+int DIGITOS(int num) {
+	int dig = 0;
+	while(num != 0) {
+		dig++;
+		num /= 10;
 	}
-	
-	
-	PAUSE();
+	return dig;
+}
+
+//Genera las facturas de los clientes
+void GEN_FACTURAS(Nodo *arbol) {
+	//variable entera c, contador para enumerar la cantidad de facturas
+	//cli
+	int c=0;
+	char fact[15]="factura_";
+	cli *clientes = GEN_LISTA_CLIENTES(),*aux=NULL;
+	if(clientes != NULL) {
+		aux=clientes;
+		while(aux!=NULL){
+			c++;
+			fact[8] = (char)(c/100+48);
+			fact[9] = (char)(c/10+48);
+			fact[10] = (char)(c+48);
+			strcat(fact,".txt");
+			fact[15] = '\0';
+			FILE *factura=fopen(fact,"w");
+			if (factura == NULL) {
+				perror("Error en la creación del archivo, procediendo a cerrar\n\n");
+				exit(1);
+			}
+			Nodo *planAux=BUSCAR(arbol,aux->plan);
+			if(planAux!=NULL){
+				fprintf(factura, " ________________________________________\n");
+				fprintf(factura, "| Cliente: %s", aux->nombre);
+				for(int i = 0; i < 30 - strlen(aux->nombre); i++) {
+					fprintf(factura, " ");
+				}
+				fprintf(factura, "|\n");
+				fprintf(factura, "| Plan: %d MB", planAux->plan.mb);
+				for(int i = 0; i < 30 - DIGITOS(planAux->plan.mb); i++) {
+					fprintf(factura, " ");
+				}
+				fprintf(factura, "|\n");
+				fprintf(factura, "| Precio: %d", planAux->plan.precio);
+				for(int i = 0; i < 31 - DIGITOS(planAux->plan.precio); i++) {
+					fprintf(factura, " ");
+				}
+				fprintf(factura, "|\n");
+				fprintf(factura, "|________________________________________|\n");
+			} else {
+				fprintf(factura, "Cliente: %s\nPlan: %d\nPlan no encontrado\n\n", aux->nombre, aux->plan);
+			}
+			fclose(factura);
+			aux=aux->sig;
+			strcpy(fact, "factura_");
+		}
+	}else{
+		perror("Error en la creacion del archivo, procediendo a cerrar\n\n");
+		exit(1);
+	}
 }
 
 int main(int argc, char *argv[]) {
-	nodo *arbol = GEN_ARBOL();
+	Nodo *arbol = GEN_ARBOL();
+	if(arbol == NULL) {
+		return 1;
+	}
+	//SPREORDER(arbol);
 	for(;;) {
 		printf("\nMenu");
 		printf("\n1 - Generar facturas");
