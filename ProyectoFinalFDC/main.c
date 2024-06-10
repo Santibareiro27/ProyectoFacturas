@@ -125,11 +125,12 @@ void GEN_FACTURAS(Nodo *arbol) {
 		exit(1);
 	}
 	printf("facturas generadas");
-	PAUSE();
 }
 
 int main(int argc, char *argv[]) {
 	Nodo *arbol = GEN_ARBOL();
+	int change = 0; /*Bandera que avisa si se efectuo
+	una alteracion en alguno de los planes*/
 	if(arbol == NULL) {
 		return 1;
 	}
@@ -137,6 +138,9 @@ int main(int argc, char *argv[]) {
 	for(;;){
 		printf("\nMenu");
 		printf("\n1 - Generar facturas");
+		printf("\n2 - Editar plan");
+		printf("\n3 - Nuevo plan");
+		printf("\n4 - Eliminar plan");
 		printf("\nS - Salir");
 		printf("\nOpcion: ");
 		fflush(stdin);
@@ -147,14 +151,27 @@ int main(int argc, char *argv[]) {
 			GEN_FACTURAS(arbol);
 			break;
 			
+		case '2':
+			
+			break;
+			
+		case '3':
+			
+			break;
+			
+		case '4':
+			
+			break;
+			
 		case 's':
 		case 'S':
+			
 			return 0;
 			
 		default:
-			CLEAR();
 			break;
 		}
+		PAUSE();
 	}
 }
 
