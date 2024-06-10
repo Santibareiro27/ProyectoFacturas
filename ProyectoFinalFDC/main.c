@@ -73,13 +73,12 @@ int DIGITOS(int num) {
 void GEN_FACTURAS(Nodo *arbol) {
 	//variable entera c, contador para enumerar la cantidad de facturas
 	//cli
-	int c=0;
+	int c=1;
 	char fact[15]="factura_";
 	cli *clientes = GEN_LISTA_CLIENTES(),*aux=NULL;
 	if(clientes != NULL) {
 		aux=clientes;
 		while(aux!=NULL){
-			c++;
 			fact[8] = (char)(c/100+48);
 			fact[9] = (char)(c/10+48);
 			fact[10] = (char)(c+48);
@@ -109,10 +108,15 @@ void GEN_FACTURAS(Nodo *arbol) {
 				}
 				fprintf(factura, "|\n");
 				fprintf(factura, "|________________________________________|\n");
+				fclose(factura);
+				c++;
 			} else {
-				fprintf(factura, "Cliente: %s\nPlan: %d\nPlan no encontrado\n\n", aux->nombre, aux->plan);
+				//fprintf(factura, "Cliente: %s\nPlan: %d\nPlan no encontrado\n\n", aux->nombre, aux->plan);
+				printf("Plan no encontrado");
+				fclose(factura);
+				remove(fact);
+				PAUSE();
 			}
-			fclose(factura);
 			aux=aux->sig;
 			strcpy(fact, "factura_");
 		}
@@ -120,6 +124,8 @@ void GEN_FACTURAS(Nodo *arbol) {
 		perror("Error en la creacion del archivo, procediendo a cerrar\n\n");
 		exit(1);
 	}
+	printf("facturas generadas");
+	PAUSE();
 }
 
 int main(int argc, char *argv[]) {
