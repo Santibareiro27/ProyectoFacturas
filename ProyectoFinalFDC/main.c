@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	//SPREORDER(arbol);
-	for(;;) {
+	for(;;){
 		printf("\nMenu");
 		printf("\n1 - Generar facturas");
 		printf("\nS - Salir");
