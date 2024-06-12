@@ -1,6 +1,4 @@
-Santiago Daniel Bareiro
-100
-Alex Acosta
-50
-Bianco Textiles
-1000
+DNI,Apellido,Nombre,CUIT,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago
+12345678,sAnTiAgO,dAnIel Bareiro,100
+45639789,Alex,Acosta,50
+98456123,Bianco Textiles,,1000

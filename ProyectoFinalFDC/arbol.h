@@ -14,7 +14,21 @@ struct Nodo {
 	Plan plan;
 	Nodo *left;
 	Nodo *right;
+	int height;
 };
+
+//Obtener altura del Nodo
+int GET_HEIGHT(Nodo *N) {
+	if(N == NULL) {
+		return 0;
+	}
+	return N->height;
+} 
+
+//Funcion para conseguir el maximo entre dos enteros
+int MAX(int a, int b) {
+	return (a > b)? a : b;
+} 
 
 //Crea un nodo
 Nodo *CREAR(Plan plan) {
@@ -23,8 +37,46 @@ Nodo *CREAR(Plan plan) {
 	nn->plan.precio = plan.precio;
 	nn->left = NULL;
 	nn->right = NULL;
+	nn->height = 1;
 	return nn;
 }
+
+// Funcion para rotar a la derecha el subárbol con raiz
+Nodo *rightRotate(Nodo *y)
+{
+	Nodo *x = y->left;
+	Nodo *T2 = x->right;
+	// Realizar rotacion
+	x->right = y;
+	y->left = T2;
+	// Actualizar alturas
+	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
+	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
+	// Devuelve nueva raiz
+	return x;
+} 
+
+// Funcion para rotar a la izquierda el subárbol con raiz x
+Nodo *leftRotate(Nodo *x)
+{
+	Nodo *y = x->right;
+	Nodo *T2 = y->left;
+	// Realizar rotacion
+	y->left = x;
+	x->right = T2;
+	// Actualizar alturas
+	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
+	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
+	// Devuelve nueva raiz
+	return y;
+} 
+
+int GET_BALANCE(Nodo *N){
+	if(N == NULL) {
+		return 0;
+	}
+	return GET_HEIGHT(N->left) - GET_HEIGHT(N->right);
+} 
 
 //Insercion nodo
 Nodo *INSERTAR_NODO(Nodo *aux, Plan plan) {
@@ -34,9 +86,34 @@ Nodo *INSERTAR_NODO(Nodo *aux, Plan plan) {
 	if(plan.mb < aux->plan.mb) {
 		aux->left = INSERTAR_NODO(aux->left, plan);
 	}
-	if(plan.mb > aux->plan.mb) {
+	else if(plan.mb > aux->plan.mb) {
 		aux->right = INSERTAR_NODO(aux->right, plan);
 	}
+	else {
+		return aux;
+	}
+	aux->height = 1 + MAX(GET_HEIGHT(aux->left),GET_HEIGHT(aux->right));
+	int balance = GET_BALANCE(aux);
+	// Left Left Caso
+	if (balance > 1 && plan.mb < aux->left->plan.mb) {
+		return rightRotate(aux);
+	}
+	// Right Right Caso
+	if(balance < -1 && plan.mb > aux->right->plan.mb) {
+		return leftRotate(aux);
+	}
+	// Left Right Caso
+	if (balance > 1 && plan.mb > aux->left->plan.mb)
+	{
+		aux->left = leftRotate(aux->left);
+		return rightRotate(aux);
+	}
+	// Right Left Caso
+	if (balance < -1 && plan.mb < aux->right->plan.mb)
+	{
+		aux->right = rightRotate(aux->right);
+		return leftRotate(aux);
+	} 
 	return aux;
 }
 
@@ -57,12 +134,13 @@ Nodo *GEN_ARBOL() {
 }
 
 
-void SPREORDER(Nodo *aux) {
-	if(aux == NULL) return;
-	printf("\nPlan %d mb: $%d.00", aux->plan.mb, aux->plan.precio);
-	SPREORDER(aux->left);
-	SPREORDER(aux->right);
-}
+void PREORDER(struct Nodo *root) {
+	if(root != NULL) {
+		printf("%d ", root->plan.mb);
+		PREORDER(root->left);
+		PREORDER(root->right);
+	}
+} 
 
 /*Busca el precio del plan usando como
 dato de busqueda el mb del cliente*/

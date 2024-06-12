@@ -4,11 +4,20 @@
 #include <string.h>
 #include "arbol.h"
 
-#ifdef _WIN32
-#define CLS "cls"
-#else
-#define CLS "clear"
-#endif
+/*
+Crear un apartado de gestion de clientes:
+*Donde los clientes estaran guardados en un arbol AVL
+*Datos en el archivo csv:DNI,Apellido,Nombre,CUIT,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago
+*Añadir clientes
+*Dar de baja cliente, lo borra del arbol AVL y del archivo
+*Cambiar plan del cliente, dice el DNI y nombre, y si su zona lo permite cambiar el plan
+*Analisis de cantidad de clientes deudores
+
+Crear un apartado de gestion de planes:
+*Agregar mas datos a la generacion de las facturas
+*Agregar un recargo si en el dato del cliente "FechaUltimoPago" es entre 11 y 20 y si supera los 20 dias, lo da de baja
+*Cambiar porcentajes de recargo
+*/
 
 typedef struct cli cli; 
 //Define nodo de lista (cli)
@@ -20,7 +29,7 @@ struct cli {
 
 //Funcion para lipar pantalla
 void CLEAR() {
-	system(CLS);
+	system(cls);
 }
 
 //Funcion que genera una pausa
@@ -73,13 +82,12 @@ int DIGITOS(int num) {
 void GEN_FACTURAS(Nodo *arbol) {
 	//variable entera c, contador para enumerar la cantidad de facturas
 	//cli
-	int c=0;
+	int c=1;
 	char fact[15]="factura_";
 	cli *clientes = GEN_LISTA_CLIENTES(),*aux=NULL;
 	if(clientes != NULL) {
 		aux=clientes;
 		while(aux!=NULL){
-			c++;
 			fact[8] = (char)(c/100+48);
 			fact[9] = (char)(c/10+48);
 			fact[10] = (char)(c+48);
@@ -109,10 +117,15 @@ void GEN_FACTURAS(Nodo *arbol) {
 				}
 				fprintf(factura, "|\n");
 				fprintf(factura, "|________________________________________|\n");
+				fclose(factura);
+				c++;
 			} else {
-				fprintf(factura, "Cliente: %s\nPlan: %d\nPlan no encontrado\n\n", aux->nombre, aux->plan);
+				//fprintf(factura, "Cliente: %s\nPlan: %d\nPlan no encontrado\n\n", aux->nombre, aux->plan);
+				printf("Plan no encontrado");
+				fclose(factura);
+				remove(fact);
+				PAUSE();
 			}
-			fclose(factura);
 			aux=aux->sig;
 			strcpy(fact, "factura_");
 		}
@@ -120,17 +133,23 @@ void GEN_FACTURAS(Nodo *arbol) {
 		perror("Error en la creacion del archivo, procediendo a cerrar\n\n");
 		exit(1);
 	}
+	printf("facturas generadas");
 }
 
 int main(int argc, char *argv[]) {
 	Nodo *arbol = GEN_ARBOL();
+	int change = 0; /*Bandera que avisa si se efectuo
+	una alteracion en alguno de los planes*/
 	if(arbol == NULL) {
 		return 1;
 	}
 	//SPREORDER(arbol);
-	for(;;) {
+	for(;;){
 		printf("\nMenu");
 		printf("\n1 - Generar facturas");
+		printf("\n2 - Editar plan");
+		pri ntf("\n3 - Nuevo plan");
+		printf("\n4 - Eliminar plan");
 		printf("\nS - Salir");
 		printf("\nOpcion: ");
 		fflush(stdin);
@@ -141,14 +160,27 @@ int main(int argc, char *argv[]) {
 			GEN_FACTURAS(arbol);
 			break;
 			
+		case '2':
+			
+			break;
+			
+		case '3':
+			
+			break;
+			
+		case '4':
+			
+			break;
+			
 		case 's':
 		case 'S':
+			
 			return 0;
 			
 		default:
-			CLEAR();
 			break;
 		}
+		PAUSE();
 	}
 }
 
