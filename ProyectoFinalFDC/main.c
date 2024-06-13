@@ -2,7 +2,12 @@
 #include <stdlib.h>
 #include <conio.h>
 #include <string.h>
-#include "arbol.h"
+#include <ctype.h>
+#include "planeslib.h"
+
+#define PLANESCSV "planes.csv"
+#define CLIENTESCSV "clientes.csv"
+#define TEMPCSV "temp.csv"
 
 /*
 Crear un apartado de gestion de clientes:
@@ -19,54 +24,20 @@ Crear un apartado de gestion de planes:
 *Cambiar porcentajes de recargo
 */
 
-typedef struct cli cli; 
-//Define nodo de lista (cli)
-struct cli {
-	char *nombre; //Nombre del cliente
-	int plan; //Velocidad en mbps
-	cli *sig;
-};
+//nodo Arbol = NULL; //arbol de clientes
+plan *Planes = NULL;
 
-//Funcion para lipar pantalla
 void CLEAR() {
-	system(cls);
+	//fun: limpia pantalla
+	system("cls");
 }
 
-//Funcion que genera una pausa
 void PAUSE() {
+	//fun: genera una pausa
 	printf("\n\nPresione una tecla para continuar...");
 	fflush(stdin);
 	getch();
 	CLEAR();
-}
-
-/*Genera la lista de clientes a partir
-de un archivo de texto*/
-cli *GEN_LISTA_CLIENTES() {
-	cli *lista = NULL, *nn;
-	char linea[64];
-	FILE *arch;
-	if((arch = fopen("Clientes.txt","r")) == 0) {
-		printf("\nERROR: No se pudo abrir el archivo para su lectura");
-		return NULL;
-	}
-	while(fgets(linea,64,arch)) {
-		nn = (cli*)malloc(sizeof(cli));
-		linea[strcspn(linea,"\n")] = 0;
-		nn->nombre = (char*)malloc(strlen(linea)+1);
-		strcpy(nn->nombre,linea);
-		if(!fscanf(arch, "%d", &nn->plan)) {
-			free(nn->nombre);
-			free(nn);
-			perror("\nERROR: No se pudo leer el archivo correctamente");
-			return NULL;
-		}
-		fgetc(arch);
-		nn->sig = lista;
-		lista = nn;
-	}
-	fclose(arch);
-	return lista;
 }
 
 int DIGITOS(int num) {
@@ -78,109 +49,123 @@ int DIGITOS(int num) {
 	return dig;
 }
 
-//Genera las facturas de los clientes
-void GEN_FACTURAS(Nodo *arbol) {
-	//variable entera c, contador para enumerar la cantidad de facturas
-	//cli
-	int c=1;
-	char fact[15]="factura_";
-	cli *clientes = GEN_LISTA_CLIENTES(),*aux=NULL;
-	if(clientes != NULL) {
-		aux=clientes;
-		while(aux!=NULL){
-			fact[8] = (char)(c/100+48);
-			fact[9] = (char)(c/10+48);
-			fact[10] = (char)(c+48);
-			strcat(fact,".txt");
-			fact[15] = '\0';
-			FILE *factura=fopen(fact,"w");
-			if (factura == NULL) {
-				perror("Error en la creación del archivo, procediendo a cerrar\n\n");
-				exit(1);
-			}
-			Nodo *planAux=BUSCAR(arbol,aux->plan);
-			if(planAux!=NULL){
-				fprintf(factura, " ________________________________________\n");
-				fprintf(factura, "| Cliente: %s", aux->nombre);
-				for(int i = 0; i < 30 - strlen(aux->nombre); i++) {
-					fprintf(factura, " ");
-				}
-				fprintf(factura, "|\n");
-				fprintf(factura, "| Plan: %d MB", planAux->plan.mb);
-				for(int i = 0; i < 30 - DIGITOS(planAux->plan.mb); i++) {
-					fprintf(factura, " ");
-				}
-				fprintf(factura, "|\n");
-				fprintf(factura, "| Precio: %d", planAux->plan.precio);
-				for(int i = 0; i < 31 - DIGITOS(planAux->plan.precio); i++) {
-					fprintf(factura, " ");
-				}
-				fprintf(factura, "|\n");
-				fprintf(factura, "|________________________________________|\n");
-				fclose(factura);
-				c++;
-			} else {
-				//fprintf(factura, "Cliente: %s\nPlan: %d\nPlan no encontrado\n\n", aux->nombre, aux->plan);
-				printf("Plan no encontrado");
-				fclose(factura);
-				remove(fact);
-				PAUSE();
-			}
-			aux=aux->sig;
-			strcpy(fact, "factura_");
-		}
-	}else{
-		perror("Error en la creacion del archivo, procediendo a cerrar\n\n");
-		exit(1);
-	}
-	printf("facturas generadas");
-}
-
-int main(int argc, char *argv[]) {
-	Nodo *arbol = GEN_ARBOL();
-	int change = 0; /*Bandera que avisa si se efectuo
-	una alteracion en alguno de los planes*/
-	if(arbol == NULL) {
-		return 1;
-	}
-	//SPREORDER(arbol);
+void MENU_PLANES() {
+	char opc;
 	for(;;){
-		printf("\nMenu");
-		printf("\n1 - Generar facturas");
-		printf("\n2 - Editar plan");
-		pri ntf("\n3 - Nuevo plan");
-		printf("\n4 - Eliminar plan");
-		printf("\nS - Salir");
+		printf("\nAdministracion de planes");
+		printf("\n1 - Mostrar planes");
+		printf("\n2 - Crear plan");
+		printf("\n3 - Eliminar plan");
+		printf("\n4 - Editar plan");
+		printf("\nS - Salir al menu principal");
 		printf("\nOpcion: ");
 		fflush(stdin);
-		switch(getch()) {
+		opc = getch();
+		CLEAR();
+		switch(opc) {
 			
 		case '1':
-			CLEAR();
-			GEN_FACTURAS(arbol);
+			MOSTRAR_PLANES(Planes);
+			PAUSE();
 			break;
 			
 		case '2':
-			
+			Planes = CREAR_PLAN(Planes);
+			Planes = GUARDAR_PLANES(Planes, PLANESCSV);
+			if(Planes == NULL) {
+				printf("\nERROR: No se pudo guardar el plan");
+				exit(1);
+			}
+			printf("\nEl plan se a guardado con exito");
+			PAUSE();
 			break;
 			
 		case '3':
-			
+			if(Planes == NULL) {
+				printf("\nNo hay planes en la lista");
+			}
+			else {
+				Planes = GUARDAR_PLANES(ELIMINAR_PLAN(Planes),PLANESCSV);
+				if(Planes == NULL) {
+					printf("\n\nADVERTENCIA: No hay ningun plan en la lista");
+				}
+			}
+			PAUSE();
 			break;
 			
 		case '4':
-			
+			if(Planes == NULL) {
+				printf("\nNo hay planes en la lista");
+			}
+			else {
+				EDITAR_PLAN(Planes);
+				Planes = GUARDAR_PLANES(Planes,PLANESCSV);
+			}
+			PAUSE();
 			break;
 			
 		case 's':
 		case 'S':
+			return;
 			
+		default:
+			break;
+		}
+	}
+}
+
+void MENU_CLIENTES() {
+	
+}
+
+void MENU_FACTURA() {
+	
+}
+
+int main() {
+	char opc;
+	if(COMPROBAR_CSV(PLANESCSV) == 0) {
+		Planes = GEN_LISTA_PLANES(PLANESCSV);
+		if(Planes == NULL) {
+			printf("\nADVERTENCIA: No hay ningun plan en la lista");
+			PAUSE();
+		}
+	}
+	else {
+		exit(1);
+	}
+	for(;;){
+		printf("\nMenu");
+		printf("\n1 - Administrar planes");
+		printf("\n2 - Administrar clientes");
+		printf("\n3 - Facturacion");
+		printf("\nS - Salir");
+		printf("\nOpcion: ");
+		fflush(stdin);
+		opc = getch();
+		CLEAR();
+		switch(opc) {
+			
+		case '1':
+			MENU_PLANES();
+			break;
+			
+		case '2':
+			MENU_CLIENTES();
+			break;
+			
+		case '3':
+			MENU_FACTURA();
+			break;
+			
+		case 's':
+		case 'S':
+			Planes = LIMPIAR_PLANES(Planes);
 			return 0;
 			
 		default:
 			break;
 		}
-		PAUSE();
 	}
 }
 
