@@ -43,6 +43,7 @@ Nodo *CREAR(cliente cli) {
 		return NULL;
 	}
 	nn->cli=cli;
+	printf("%d",cli.cuit);
 	nn->left = NULL;
 	nn->right = NULL;
 	nn->height = 1;
@@ -162,8 +163,7 @@ Nodo *GEN_ARBOL(char *archname) {
 	cliente cli;
 	FILE *arch;
 	char linea[180], *dato;
-	arch = fopen(archname,"r");
-	if(!arch) {
+	if((arch= fopen(archname,"r")) == 0) {
 		printf("\nERROR: No se encontro \"%s\"", archname);
 		return NULL;
 	}
@@ -171,22 +171,23 @@ Nodo *GEN_ARBOL(char *archname) {
 	while (fgets(linea, sizeof(linea), arch)) {
 		
 		dato = strtok(linea, ",");
+		printf("%s,", dato);
 		cli.cuit = atoi(dato);
-		printf("%d,", cli.cuit);
+		
 		
 		dato = strtok(NULL, ",");
 		for(int i=0;i<strlen(dato);i++){
 			dato[i] = toupper(dato[i]);
 		}
 		cli.apellido = dato;
-		printf("%s", cli.apellido);
+		
 		
 		dato = strtok(NULL, ",");
 		for(int i=0;i<strlen(&dato);i++){
 			dato[i] = tolower(dato[i]);
 		}
 		cli.nombre = dato;
-		printf("%s", cli.nombre);
+		
 		
 		dato = strtok(NULL, ",");
 		for(int i=0;i<strlen(&dato);i++){

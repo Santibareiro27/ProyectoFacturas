@@ -169,6 +169,11 @@ int main() {
 	if(COMPROBAR_PLANESCSV(PLANESCSV) == 0) {
 		Planes = GEN_LISTA_PLANES(PLANESCSV);
 		Clientes = GEN_ARBOL(CLIENTESCSV);
+		if(Clientes->right==NULL && Clientes->left==NULL){
+			printf("\nAVs");
+			printf("%d,", Clientes->cli.cuit);
+			
+		}
 		if(Planes == NULL && Clientes == NULL) {
 			printf("\nADVERTENCIA: No hay ningun plan en la lista, ni clientes en el arbol");
 			PAUSE();
