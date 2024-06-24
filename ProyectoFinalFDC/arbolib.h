@@ -3,11 +3,14 @@
 #include <stdio.h>
 #include <locale.h>
 #include <stdlib.h>
+//Eliminar a los usuarios por medio de eleccion de dni
+//Hacer una funcion de busqueda en el arbol que revise la fecha de los clientes 
+// y si la dif con respecto al de la maquina es mayor o igual a 31 dias entonces lo elimina
 
 typedef struct cliente cliente;
 //Define estructura de cli
 struct cliente {
-	int cuit,mb;
+	int dni,cuit,mb;
 	char *apellido,*nombre,*iva,*direccion;
 	char zona;
 	time_t fechaUltPago;
@@ -43,7 +46,6 @@ Nodo *CREAR(cliente cli) {
 		return NULL;
 	}
 	nn->cli=cli;
-	printf("%d",cli.cuit);
 	nn->left = NULL;
 	nn->right = NULL;
 	nn->height = 1;
@@ -87,16 +89,16 @@ int GET_BALANCE(Nodo *N){
 	}
 	return GET_HEIGHT(N->left) - GET_HEIGHT(N->right);
 } 
-
-//Insercion nodo
+	
+	//Insercion nodo
 Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
 	if(aux == NULL) {
 		return CREAR(cli);
 	}
-	if(cli.cuit < aux->cli.cuit) {
+	if(cli.dni < aux->cli.dni) {
 		aux->left = INSERTAR_NODO(aux->left, cli);
 	}
-	else if(cli.cuit > aux->cli.cuit) {
+	else if(cli.dni > aux->cli.dni) {
 		aux->right = INSERTAR_NODO(aux->right, cli);
 	}
 	else {
@@ -105,21 +107,21 @@ Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
 	aux->height = 1 + MAX(GET_HEIGHT(aux->left),GET_HEIGHT(aux->right));
 	int balance = GET_BALANCE(aux);
 	// Left Left Caso
-	if (balance > 1 && cli.cuit < aux->left->cli.cuit) {
+	if (balance > 1 && cli.dni < aux->left->cli.dni) {
 		return rightRotate(aux);
 	}
 	// Right Right Caso
-	if(balance < -1 && cli.cuit > aux->right->cli.cuit) {
+	if(balance < -1 && cli.dni > aux->right->cli.dni) {
 		return leftRotate(aux);
 	}
 	// Left Right Caso
-	if (balance > 1 && cli.cuit > aux->left->cli.cuit)
+	if (balance > 1 && cli.dni > aux->left->cli.dni)
 	{
 		aux->left = leftRotate(aux->left);
 		return rightRotate(aux);
 	}
 	// Right Left Caso
-	if (balance < -1 && cli.cuit < aux->right->cli.cuit)
+	if (balance < -1 && cli.dni < aux->right->cli.dni)
 	{
 		aux->right = rightRotate(aux->right);
 		return leftRotate(aux);
@@ -128,34 +130,29 @@ Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
 }
 
 time_t atotime_t(char *fecha) {
-	struct tm tm = {0}; // Inicializar la estructura tm con ceros
+	struct tm tm = {0};
 	time_t t;
-	
-	// Analizar la cadena de fecha manualmente
 	int dia, mes, anio;
 	if (sscanf(fecha, "%d/%d/%d", &dia, &mes, &anio) != 3) {
 		printf("Error al analizar la fecha\n");
 		return -1;
 	}
-	
-	// Llenar la estructura tm
 	tm.tm_mday = dia;
-	tm.tm_mon = mes-1;  // Los meses en struct tm son 0-11
-	tm.tm_year = anio-1900;  // Los años en struct tm son años desde 1900
-	
-	
-	// Convertir la estructura tm a time_t
-	
+	tm.tm_mon = mes-1;
+	tm.tm_year = anio-1900;
 	t = mktime(&tm);
-	
 	if (t == -1) {
 		printf("Error al convertir la fecha a time_t\n");
 		return -1;
 	}
-	
 	return t;
-	}
+}
 
+void time_ttoa(time_t tiempo, char *buffer, size_t buffer_size) {
+	struct tm *tm_info;
+	tm_info = localtime(&tiempo);
+	strftime(buffer, buffer_size, "%d/%m/%Y", tm_info);
+}
 
 //Genera arbol de clientes
 Nodo *GEN_ARBOL(char *archname) {
@@ -169,41 +166,46 @@ Nodo *GEN_ARBOL(char *archname) {
 	}
 	fgets(linea, sizeof(linea), arch);
 	while (fgets(linea, sizeof(linea), arch)) {
-		
 		dato = strtok(linea, ",");
-		printf("%s,", dato);
-		cli.cuit = atoi(dato);
+		cli.dni = atoi(dato);
 		
+		dato = strtok(NULL, ",");
+		cli.cuit = atoi(dato);
 		
 		dato = strtok(NULL, ",");
 		for(int i=0;i<strlen(dato);i++){
 			dato[i] = toupper(dato[i]);
 		}
-		cli.apellido = dato;
+		cli.apellido = (char*)malloc(strlen(dato)+1);
+		strcpy(cli.apellido,dato);
 		
 		
 		dato = strtok(NULL, ",");
-		for(int i=0;i<strlen(&dato);i++){
+		for(int i=0;i<strlen(dato);i++){
 			dato[i] = tolower(dato[i]);
 		}
-		cli.nombre = dato;
+		cli.nombre = (char*)malloc(strlen(dato)+1);
+		strcpy(cli.nombre,dato);
 		
 		
 		dato = strtok(NULL, ",");
-		for(int i=0;i<strlen(&dato);i++){
+		for(int i=0;i<strlen(dato);i++){
 			dato[i] = tolower(dato[i]);
 		}
-		cli.iva = dato;
+		cli.iva = (char*)malloc(strlen(dato)+1);
+		strcpy(cli.iva,dato);
 		
 		dato = strtok(NULL, ",");
-		for(int i=0;i<strlen(&dato);i++){
+		for(int i=0;i<strlen(dato);i++){
 			dato[i] = tolower(dato[i]);
 		}
-		cli.direccion = dato;
+		cli.direccion = (char*)malloc(strlen(dato)+1);
+		strcpy(cli.direccion,dato);
+		
 		dato = strtok(NULL, ",");
-		cli.zona=tolower(*dato);
+		cli.zona = tolower(*dato);
 		dato = strtok(NULL, ",");
-		cli.cuit = atof(dato);
+		cli.mb = atof(dato);
 		
 		dato = strtok(NULL, ",");
 		cli.fechaUltPago=atotime_t(dato);
@@ -217,18 +219,87 @@ Nodo *GEN_ARBOL(char *archname) {
 
 void PREORDER(struct Nodo *root) {
 	if(root != NULL) {
+		printf("%d,", root->cli.dni);
 		printf("%d,", root->cli.cuit);
-		printf("%s", root->cli.apellido);
-		printf("%s", root->cli.nombre);
-		printf("%s", root->cli.iva);
-		printf("%s", root->cli.direccion);
+		printf("%s,", root->cli.apellido);
+		printf("%s,", root->cli.nombre);
+		printf("%s,", root->cli.iva);
+		printf("%s,", root->cli.direccion);
 		printf("%c,", root->cli.zona);
 		printf("%d,", root->cli.mb);
-		
+		char fecha[11];
+		time_ttoa(root->cli.fechaUltPago, fecha, sizeof(fecha));
+		printf("%s,", fecha);
 		PREORDER(root->left);
 		PREORDER(root->right);
 	}
 } 
+
+int GETMIN(Nodo *aux) {
+	while(aux->left != NULL) {
+		aux = aux->left;
+	}
+	return aux->cli.dni;
+}
+
+
+Nodo *REMOVEN(Nodo *aux, int val) {
+	if(aux == NULL) {
+		return NULL;
+	}
+	
+	
+	
+	if(val < aux->cli.dni) {
+		aux->left = REMOVEN(aux->left, val);
+	}
+	else if(val > aux->cli.dni) {
+		aux->right = REMOVEN(aux->right, val);
+	}
+	else {
+		if(aux->left == NULL && aux->right == NULL) {
+			free(aux);
+			return NULL;
+		}
+		else if(aux->left == NULL) {
+			Nodo *temp = aux->right;
+			free(aux);
+			return temp;
+		}
+		else if(aux->right == NULL) {
+			Nodo *temp = aux->left;
+			free(aux);
+			return temp;
+		}
+		else {
+			int rmin = GETMIN(aux->right);
+			aux->cli.dni = rmin;
+			aux->right = REMOVEN(aux->right, rmin);
+		}
+	}
+	return aux;
+}
+
+void ELIMINADODEMORADORES(Nodo *root) {
+	double diff=0;
+	if(root != NULL) {
+	time_t rawtime;
+	struct tm *timeinfo;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	diff=difftime(root->cli.fechaUltPago,timeinfo);
+		if(diff>2678400){
+			root=REMOVEN(root,root->cli.dni);
+		}
+		if(root!=NULL){
+		ELIMINADODEMORADORES(root->left);
+		if(root!=NULL){
+		ELIMINADODEMORADORES(root->right);
+		}
+	}
+	}
+}
+
 
 /*Busca el precio del cli usando como
 dato de busqueda el cuit del cliente*/
@@ -236,13 +307,13 @@ Nodo *BUSCAR(Nodo *aux, int val) {
 	if(aux == NULL) {
 		return NULL;
 	}
-	if(val == aux->cli.cuit) {
+	if(val == aux->cli.dni) {
 		return aux;
 	}
-	else if(val < aux->cli.cuit) {
+	else if(val < aux->cli.dni) {
 		return BUSCAR(aux->left, val);
 	}
-	else if(val > aux->cli.cuit) {
+	else if(val > aux->cli.dni) {
 		return BUSCAR(aux->right, val);
 	}
 	return NULL;
@@ -257,7 +328,7 @@ int COMPROBAR_CLIENTESCSV(char *archname) {
 			printf("\nERROR: No se pudo crear el archivo de planes");
 			return 1;
 		}
-		fputs("cuit,Apellido,Nombre,CUIT,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago,\n",arch);
+		fputs("DNI,CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago,\n",arch);
 	}
 	fclose(arch);
 	return 0;

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 typedef struct plan{ //define estructura de lista de planes
 	int mb; //velocidad en mbps
@@ -8,27 +9,34 @@ typedef struct plan{ //define estructura de lista de planes
 	struct plan *sig;
 }plan;
 
-void MOSTRAR_PLANES(plan *aux) {
-	if(aux == NULL) {
+void MOSTRAR_PLANES(plan *lista) {
+	//fun: muestra la lista
+	//pre: lista a leer
+	if(lista == NULL) {
 		printf("\nLa lista esta vacia");
 	}
-	while(aux != NULL) {
-		printf("\nPlan: %d mb\nZona: %c \nPrecio: %.2lf\n", aux->mb, aux->zona, aux->precio);
-		aux = aux->sig;
+	while(lista != NULL) {
+		printf("\nPlan: %d mb\nZona: %c \nPrecio: %.2lf\n", lista->mb, lista->zona, lista->precio);
+		lista = lista->sig;
 	}
 }
 
-plan *LIMPIAR_PLANES(plan *aux) {
+void LIMPIAR_PLANES(plan **aux) {
+	//fun: elimina la lista y limpia la memoria
+	//pre: lista por referencia
 	plan *memory;
-	while(aux != NULL) {
-		memory = aux;
-		aux = aux->sig;
+	while(*aux != NULL) {
+		memory = *aux;
+		*aux = (*aux)->sig;
 		free(memory);
 	}
-	return aux;
 }
 
-int COMPROBAR_PLANESCSV(char *archname) {
+int COMPROBAR_CSV(char *archname) {
+	//fun: comprueba si el archivo csv
+	//de planes existe, sino lo crea
+	//pre: nombre del archivo
+	//pos: codigo de exito/error
 	FILE *arch;
 	arch = fopen(archname,"r");
 	if(!arch) {
@@ -43,26 +51,27 @@ int COMPROBAR_PLANESCSV(char *archname) {
 	return 0;
 }
 
-plan *GUARDAR_PLANES(plan *lista, char *archname) {
+int GUARDAR_PLANES(plan *lista, char *archname) {
+	//fun: guarda la lista en la base de datos
+	//pre: lista a guardar y nombre del archivo destino
+	//pos: codigo de exito/error
 	FILE *arch = fopen(archname,"w");
 	if(!arch) {
 		printf("\nERROR: No se pudieron guardar los cambios");
-		lista = LIMPIAR_PLANES(lista);
-		return NULL;
+		return 1;
 	}
-	else {
-		fprintf(arch, "MB,ZONA,PRECIO,\n");
-		plan *aux = lista;
-		while(aux != NULL) {
-			fprintf(arch, "%d,%c,%.2lf,\n", aux->mb, aux->zona, aux->precio);
-			aux = aux->sig;
-		}
-		fclose(arch);
+	fprintf(arch, "MB,ZONA,PRECIO,\n");
+	while(lista != NULL) {
+		fprintf(arch, "%d,%c,%.2lf,\n", lista->mb, lista->zona, lista->precio);
+		lista = lista->sig;
 	}
-	return lista;
+	fclose(arch);
+	return 0;
 }
 
 void EDITAR_PLAN(plan *aux) {
+	//fun: edita un plan existente
+	//pre: lista por referencia
 	int num;
 	do {
 		printf("\nIngrese los mb del plan que desea editar: ");
@@ -102,7 +111,10 @@ void EDITAR_PLAN(plan *aux) {
 	} while(aux->precio <= 0);
 }
 
-plan *ELIMINAR_PLAN(plan *lista) {
+int ELIMINAR_PLAN(plan **lista) {
+	//fun: elimina un plan existente
+	//pre: lista por referencia
+	//pos: codigo de exito/error
 	int elim;
 	do {
 		printf("\nIngrese los mb del plan que desea eliminar: ");
@@ -114,11 +126,11 @@ plan *ELIMINAR_PLAN(plan *lista) {
 			printf("\nERROR: Ingreso no valido");
 		}
 	} while(elim <= 0);
-	plan *ant = NULL, *act = lista;
+	plan *ant = NULL, *act = *lista;
 	while(act != NULL) {
 		if(act->mb == elim) {
 			if(ant == NULL) {
-				lista = lista->sig;
+				*lista = (*lista)->sig;
 			}
 			else {
 				ant->sig = act->sig;
@@ -131,22 +143,19 @@ plan *ELIMINAR_PLAN(plan *lista) {
 		act = act->sig;
 	}
 	if(elim != 0) {
-		printf("\nNo se encontro el plan a eliminar");
+		return 1;
 	}
-	else {
-		printf("\nEl plan se ha eliminado con exito");
-	}
-	return lista;
+	return 0;
 }
 
-plan *CREAR_PLAN(plan *lista) {
+int CREAR_PLAN(plan **lista) {
 	//fun: crea plan nuevo
-	//pre: ubicacion de lista
-	//pos: ubicacion nueva de lista
+	//pre: lista por referencia
+	//pos: codigo de exito/error
 	plan *nn = (plan*)malloc(sizeof(plan));
 	if(nn == NULL) {
 		printf("\nERROR: Memoria insuficiente");
-		return lista;
+		return 1;
 	}
 	do {
 		printf("\nIngrese los mb del plan (numero mayor a 0): ");
@@ -158,7 +167,7 @@ plan *CREAR_PLAN(plan *lista) {
 			printf("\nERROR: Ingreso no valido\n");
 		}
 		else {
-			plan *aux = lista;
+			plan *aux = *lista;
 			while(aux != NULL) {
 				if(nn->mb == aux->mb) {
 					printf("\nERROR: Ya existe un plan con esta cantidad de mb\n");
@@ -187,27 +196,29 @@ plan *CREAR_PLAN(plan *lista) {
 			printf("\nERROR: Ingreso no valido\n");
 		}
 	} while(nn->precio <= 0);
-	nn->sig = lista;
-	lista = nn;
-	return lista;
+	nn->sig = *lista;
+	*lista = nn;
+	return 0;
 }
 
-plan *GEN_LISTA_PLANES(char *archname) {
-	plan *lista = NULL, *nn;
+int GEN_LISTA_PLANES(plan **lista, char *archname) {
+	//fun: genera la lista de planes a partir del archivo
+	//pre: lista por referencia y archivo fuente
+	//pos: codigo de exito/error
+	plan *nn;
 	FILE *arch;
 	char linea[50], *dato;
 	arch = fopen(archname,"r");
 	if(!arch) {
 		printf("\nERROR: No se encontro \"%s\"", archname);
-		return NULL;
+		return 1;
 	}
 	fgets(linea, sizeof(linea), arch);
 	while(fgets(linea, sizeof(linea), arch)) {
 		nn = (plan*)malloc(sizeof(plan));
 		if(nn == NULL) {
 			printf("\nERROR: Memoria insuficiente");
-			lista = LIMPIAR_PLANES(lista);
-			return NULL;
+			return 2;
 		}
 		dato = strtok(linea, ",");
 		nn->mb = atoi(dato);
@@ -215,9 +226,9 @@ plan *GEN_LISTA_PLANES(char *archname) {
 		nn->zona = tolower(*dato);
 		dato = strtok(NULL, ",");
 		nn->precio = atof(dato);
-		nn->sig = lista;
-		lista = nn;
+		nn->sig = *lista;
+		*lista = nn;
 	}
 	fclose(arch);
-	return lista;
+	return 0;
 }
