@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "planeslib.h"
+#include "arbolib.h"
 
 #define PLANESCSV "planes.csv"
 #define CLIENTESCSV "clientes.csv"
@@ -26,6 +27,7 @@ Crear un apartado de gestion de planes:
 
 //nodo Arbol = NULL; //arbol de clientes
 plan *Planes = NULL;
+Nodo *Clientes = NULL;
 
 void CLEAR() {
 	//fun: limpia pantalla
@@ -38,15 +40,6 @@ void PAUSE() {
 	fflush(stdin);
 	getch();
 	CLEAR();
-}
-
-int DIGITOS(int num) {
-	int dig = 0;
-	while(num != 0) {
-		dig++;
-		num /= 10;
-	}
-	return dig;
 }
 
 void MENU_PLANES() {
@@ -70,13 +63,18 @@ void MENU_PLANES() {
 			break;
 			
 		case '2':
-			Planes = CREAR_PLAN(Planes);
-			Planes = GUARDAR_PLANES(Planes, PLANESCSV);
-			if(Planes == NULL) {
-				printf("\nERROR: No se pudo guardar el plan");
-				exit(1);
+			if(CREAR_PLAN(&Planes) == 0) {
+				if(GUARDAR_PLANES(Planes,PLANESCSV) != 0) {
+					LIMPIAR_PLANES(&Planes);
+					if(GEN_LISTA_PLANES(&Planes, PLANESCSV) != 0) {
+						LIMPIAR_PLANES(&Planes);
+						exit(1);
+					}
+				}
+				else {
+					printf("\nEl plan se ha creado con exito");
+				}
 			}
-			printf("\nEl plan se a guardado con exito");
 			PAUSE();
 			break;
 			
@@ -85,7 +83,21 @@ void MENU_PLANES() {
 				printf("\nNo hay planes en la lista");
 			}
 			else {
-				Planes = GUARDAR_PLANES(ELIMINAR_PLAN(Planes),PLANESCSV);
+				if(ELIMINAR_PLAN(&Planes) == 0) {
+					if(GUARDAR_PLANES(Planes,PLANESCSV) != 0) {
+						LIMPIAR_PLANES(&Planes);
+						if(GEN_LISTA_PLANES(&Planes, PLANESCSV) != 0) {
+							LIMPIAR_PLANES(&Planes);
+							exit(1);
+						}
+					}
+					else {
+						printf("\nEl plan se ha eliminado con exito");
+					}
+				}
+				else {
+					printf("\nNo se encontro el plan a eliminar");
+				}
 				if(Planes == NULL) {
 					printf("\n\nADVERTENCIA: No hay ningun plan en la lista");
 				}
@@ -99,7 +111,13 @@ void MENU_PLANES() {
 			}
 			else {
 				EDITAR_PLAN(Planes);
-				Planes = GUARDAR_PLANES(Planes,PLANESCSV);
+				if(GUARDAR_PLANES(Planes,PLANESCSV) != 0) {
+					LIMPIAR_PLANES(&Planes);
+					if(GEN_LISTA_PLANES(&Planes, PLANESCSV) != 0) {
+						LIMPIAR_PLANES(&Planes);
+						exit(1);
+					}
+				}
 			}
 			PAUSE();
 			break;
@@ -115,7 +133,47 @@ void MENU_PLANES() {
 }
 
 void MENU_CLIENTES() {
-	
+	char opc;
+	for(;;){
+		printf("\nAdministracion de clientes");
+		printf("\n1 - Mostrar clientes");
+		printf("\n2 - Crear cliente");
+		printf("\n3 - Eliminar cliente");
+		printf("\n4 - Editar cliente");
+		printf("\nS - Salir al menu principal");
+		printf("\nOpcion: ");
+		fflush(stdin);
+		opc = getch();
+		CLEAR();
+		switch(opc) {
+			
+		case '1':
+			printf("Mostrando datos\n");
+			printf("CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago\n");
+			PREORDER(Clientes);
+			PAUSE();
+			break;
+			
+		case '2':
+			
+			break;
+			
+		case '3':
+			
+			break;
+			
+		case '4':
+			
+			break;
+			
+		case 's':
+		case 'S':
+			return;
+			
+		default:
+			break;
+		}
+	}
 }
 
 void MENU_FACTURA() {
@@ -125,7 +183,9 @@ void MENU_FACTURA() {
 int main() {
 	char opc;
 	if(COMPROBAR_CSV(PLANESCSV) == 0) {
-		Planes = GEN_LISTA_PLANES(PLANESCSV);
+		if(GEN_LISTA_PLANES(&Planes, PLANESCSV) == 2) {
+			LIMPIAR_PLANES(&Planes);
+		}
 		if(Planes == NULL) {
 			printf("\nADVERTENCIA: No hay ningun plan en la lista");
 			PAUSE();
@@ -134,6 +194,7 @@ int main() {
 	else {
 		exit(1);
 	}
+	Clientes = GEN_ARBOL(CLIENTESCSV);
 	for(;;){
 		printf("\nMenu");
 		printf("\n1 - Administrar planes");
@@ -160,7 +221,7 @@ int main() {
 			
 		case 's':
 		case 'S':
-			Planes = LIMPIAR_PLANES(Planes);
+			LIMPIAR_PLANES(&Planes);
 			return 0;
 			
 		default:
