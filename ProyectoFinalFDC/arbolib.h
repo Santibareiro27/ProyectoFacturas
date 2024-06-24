@@ -241,14 +241,13 @@ int GETMIN(Nodo *aux) {
 	}
 	return aux->cli.dni;
 }
-
-
+		
+		
 Nodo *REMOVEN(Nodo *aux, int val) {
+	
 	if(aux == NULL) {
 		return NULL;
 	}
-	
-	
 	
 	if(val < aux->cli.dni) {
 		aux->left = REMOVEN(aux->left, val);
@@ -278,6 +277,7 @@ Nodo *REMOVEN(Nodo *aux, int val) {
 		}
 	}
 	return aux;
+	
 }
 
 void ELIMINADODEMORADORES(Nodo *root) {
@@ -290,16 +290,18 @@ void ELIMINADODEMORADORES(Nodo *root) {
 	diff=difftime(root->cli.fechaUltPago,timeinfo);
 		if(diff>2678400){
 			root=REMOVEN(root,root->cli.dni);
+			if(root==NULL){
+				return;
+			}
 		}
-		if(root!=NULL){
 		ELIMINADODEMORADORES(root->left);
-		if(root!=NULL){
+		if(root==NULL){
+			return;
+		}
 		ELIMINADODEMORADORES(root->right);
+		
 		}
 	}
-	}
-}
-
 
 /*Busca el precio del cli usando como
 dato de busqueda el cuit del cliente*/

@@ -161,9 +161,14 @@ void MENU_CLIENTES() {
 			break;
 			
 		case '3':
+			if(Clientes == NULL) {
+				printf("\nNo hay clientes en el arbol");
+			}else{
 			printf("Ingrese un dni para eliminar del arbol de clientes\n");
 			scanf("%d",&dni);
 			Clientes=REMOVEN(Clientes,dni);
+			
+			}
 			break;
 			
 		case '4':
