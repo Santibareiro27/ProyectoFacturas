@@ -3,27 +3,27 @@
 #include <stdio.h>
 #include <locale.h>
 #include <stdlib.h>
+#define CLIENTESCSV "clientes.csv"
 //Eliminar a los usuarios por medio de eleccion de dni
 //Hacer una funcion de busqueda en el arbol que revise la fecha de los clientes 
 // y si la dif con respecto al de la maquina es mayor o igual a 31 dias entonces lo elimina
 
-typedef struct cliente cliente;
 //Define estructura de cli
-struct cliente {
-	int dni,cuit,mb;
-	char *apellido,*nombre,*iva,*direccion;
+typedef struct cliente {
+	unsigned long int dni;
+	int mb;
+	char *apellido,*nombre,*iva,*direccion,*cuit;
 	char zona;
 	time_t fechaUltPago;
-};
+}cliente;
 
-typedef struct Nodo Nodo;
 //Define nodo de arbol
-struct Nodo {
+typedef struct Nodo {
 	cliente cli;
-	Nodo *left;
-	Nodo *right;
+	struct Nodo *left;
+	struct Nodo *right;
 	int height;
-};
+}Nodo;
 
 //Obtener altura del Nodo
 int GET_HEIGHT(Nodo *N) {
@@ -167,10 +167,11 @@ Nodo *GEN_ARBOL(char *archname) {
 	fgets(linea, sizeof(linea), arch);
 	while (fgets(linea, sizeof(linea), arch)) {
 		dato = strtok(linea, ",");
-		cli.dni = atoi(dato);
+		cli.dni = atol(dato);
 		
 		dato = strtok(NULL, ",");
-		cli.cuit = atoi(dato);
+		cli.cuit = (char*)malloc(strlen(dato)+1);
+		strcpy(cli.cuit,dato);
 		
 		dato = strtok(NULL, ",");
 		for(int i=0;i<strlen(dato);i++){
@@ -205,7 +206,7 @@ Nodo *GEN_ARBOL(char *archname) {
 		dato = strtok(NULL, ",");
 		cli.zona = tolower(*dato);
 		dato = strtok(NULL, ",");
-		cli.mb = atof(dato);
+		cli.mb = atoi(dato);
 		
 		dato = strtok(NULL, ",");
 		cli.fechaUltPago=atotime_t(dato);
@@ -219,8 +220,8 @@ Nodo *GEN_ARBOL(char *archname) {
 
 void PREORDER(struct Nodo *root) {
 	if(root != NULL) {
-		printf("%d,", root->cli.dni);
-		printf("%d,", root->cli.cuit);
+		printf("\n%lu,", root->cli.dni);
+		printf("%s,", root->cli.cuit);
 		printf("%s,", root->cli.apellido);
 		printf("%s,", root->cli.nombre);
 		printf("%s,", root->cli.iva);
@@ -280,9 +281,112 @@ Nodo *REMOVEN(Nodo *aux, int val) {
 	
 }
 
-void ELIMINADODEMORADORES(Nodo *root) {
+int GUARDAR_CLIENTES(Nodo *c, char *archname) {
+	//fun: guarda la lista en la base de datos
+	//pre: lista a guardar y nombre del archivo destino
+	//pos: codigo de exito/error
+	FILE *arch = fopen(archname,"w");
+	if(!arch) {
+		printf("\nERROR: No se pudieron guardar los cambios");
+		return 1;
+	}
+	if(c!=NULL){
+	fprintf(arch, "DNI,CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago,\n");
+	char fecha[11];
+	time_ttoa(c->cli.fechaUltPago,fecha,sizeof(fecha));
+	fprintf(arch, "%lu,%s,%s,%s,%s,%s,%c,%s\n", c->cli.dni,c->cli.cuit,c->cli.apellido,c->cli.nombre,c->cli.iva,c->cli.direccion,c->cli.zona,fecha);
+		if(c->left!=NULL){
+			GUARDAR_CLIENTES(c->left,CLIENTESCSV);
+		}
+		if(c->right!=NULL){
+			GUARDAR_CLIENTES(c->right,CLIENTESCSV);
+		}
+	}
+	fclose(arch);
+	return 0;
+}
+
+Nodo *INSERTADO(Nodo *c){
+	
+	printf("Ingrese los datos del cliente\n");
+	char dato[100];
+	cliente datosCli;
+	
+	printf("DNI:");
+	scanf("%lu",&datosCli.dni);
+	
+	fflush(stdin);
+	printf("Cuit (sin espacios): ");
+	scanf("%s",dato);
+	datosCli.cuit = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.cuit,dato);
+	printf("%s,", datosCli.cuit);
+	
+	fflush(stdin);
+	printf("\nApellido (sin espacios):");
+	gets(dato);
+	for(int i=0;i<strlen(dato);i++){
+		dato[i] = toupper(dato[i]);
+	}
+	datosCli.apellido = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.apellido,dato);
+	
+	fflush(stdin);
+	printf("\nNombre (sin espacios):");
+	gets(dato);
+	for(int i=0;i<strlen(dato);i++){
+		dato[i] = tolower(dato[i]);
+	}
+	datosCli.nombre = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.nombre,dato);
+	
+	fflush(stdin);
+	printf("\nCondicion IVA (sin espacios):");
+	gets(dato);
+	for(int i=0;i<strlen(dato);i++){
+		dato[i] = tolower(dato[i]);
+	}
+	datosCli.iva = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.iva,dato);
+	
+	fflush(stdin);
+	printf("\nDireccion (sin espacios):");
+	gets(dato);
+	for(int i=0;i<strlen(dato);i++){
+		dato[i] = tolower(dato[i]);
+	}
+	datosCli.direccion = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.direccion,dato);
+	
+	fflush(stdin);
+	printf("\nZona:");
+	scanf("%c",&datosCli.zona);
+	datosCli.zona = tolower(datosCli.zona);
+	fflush(stdin);
+	printf("\nMB:");
+	scanf("%d",&datosCli.mb);
+	fflush(stdin);
+	printf("\n Fecha del ultimo pago (dd/mm/yyyy):");
+	gets(dato);
+	datosCli.fechaUltPago=atotime_t(dato);
+	fflush(stdin);
+	
+	c=INSERTAR_NODO(c,datosCli);
+	c = GEN_ARBOL(CLIENTESCSV);
+	if(GUARDAR_CLIENTES(c,CLIENTESCSV)==0){
+		printf("Guardado correctamente\n");
+	}else{
+		c=REMOVEN(c,datosCli.dni);
+	}
+	return c;
+}
+
+Nodo *ELIMINADODEMORADORES(Nodo *root) {
 	double diff=0;
-	if(root != NULL) {
+	if(root == NULL){
+		return NULL;
+	}
+	
 	time_t rawtime;
 	struct tm *timeinfo;
 	time ( &rawtime );
@@ -290,18 +394,17 @@ void ELIMINADODEMORADORES(Nodo *root) {
 	diff=difftime(root->cli.fechaUltPago,timeinfo);
 		if(diff>2678400){
 			root=REMOVEN(root,root->cli.dni);
-			if(root==NULL){
-				return;
-			}
+			
 		}
-		ELIMINADODEMORADORES(root->left);
-		if(root==NULL){
-			return;
+		if(root!=NULL){
+		root->left=ELIMINADODEMORADORES(root->left);
 		}
-		ELIMINADODEMORADORES(root->right);
-		
+		if(root!=NULL){
+		root->right=ELIMINADODEMORADORES(root->right);
 		}
-	}
+	return root;	
+}
+
 
 /*Busca el precio del cli usando como
 dato de busqueda el cuit del cliente*/
@@ -320,6 +423,7 @@ Nodo *BUSCAR(Nodo *aux, int val) {
 	}
 	return NULL;
 }
+
 
 int COMPROBAR_CLIENTESCSV(char *archname) {
 	FILE *arch;

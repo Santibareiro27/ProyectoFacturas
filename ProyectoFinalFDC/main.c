@@ -138,7 +138,7 @@ void MENU_CLIENTES() {
 	for(;;){
 		printf("\nAdministracion de clientes");
 		printf("\n1 - Mostrar clientes");
-		printf("\n2 - Crear cliente");
+		printf("\n2 - Agregar cliente");
 		printf("\n3 - Eliminar cliente");
 		printf("\n4 - Realizar un limpiado de clientes moradores");
 		printf("\n5 - Editar cliente");
@@ -150,13 +150,25 @@ void MENU_CLIENTES() {
 		switch(opc) {
 			
 		case '1':
+			if(Clientes==NULL){
+				printf("No hay clientes en el arbol\n");
+			}else{
 			printf("Mostrando datos\n");
 			printf("CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago\n");
 			PREORDER(Clientes);
 			PAUSE();
+			}
 			break;
 			
 		case '2':
+			do{
+			Clientes=INSERTADO(Clientes);
+			fflush(stdin);
+			printf("Desea agregar otro cliente? S/N\n");
+			opc = getch();
+			opc=toupper(opc);
+			fflush(stdin);
+			}while(opc=='S');
 			
 			break;
 			
@@ -167,13 +179,12 @@ void MENU_CLIENTES() {
 			printf("Ingrese un dni para eliminar del arbol de clientes\n");
 			scanf("%d",&dni);
 			Clientes=REMOVEN(Clientes,dni);
-			
 			}
 			break;
 			
 		case '4':
 			printf("Procediendo a eliminar clientes moradores de mas de 31 dias\n");
-			ELIMINADODEMORADORES(Clientes);
+			Clientes=ELIMINADODEMORADORES(Clientes);
 			printf("Elimado completado\n");
 			PAUSE();
 			break;
