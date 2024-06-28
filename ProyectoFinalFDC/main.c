@@ -50,8 +50,9 @@ void MENU_PLANES() {
 					LIMPIAR_PLANES(&Planes);
 					if(GEN_LISTA_PLANES(&Planes, PLANESCSV) != 0) {
 						LIMPIAR_PLANES(&Planes);
-						exit(1);
-					}
+						printf("\nSe ha producido un error\a\n");
+						PAUSE();
+						exit(1);					}
 				}
 				else {
 					printf("\nEl plan se ha creado con exito");
@@ -70,6 +71,8 @@ void MENU_PLANES() {
 						LIMPIAR_PLANES(&Planes);
 						if(GEN_LISTA_PLANES(&Planes, PLANESCSV) != 0) {
 							LIMPIAR_PLANES(&Planes);
+							printf("\nSe ha producido un error\a\n");
+							PAUSE();
 							exit(1);
 						}
 					}
@@ -97,6 +100,8 @@ void MENU_PLANES() {
 					LIMPIAR_PLANES(&Planes);
 					if(GEN_LISTA_PLANES(&Planes, PLANESCSV) != 0) {
 						LIMPIAR_PLANES(&Planes);
+						printf("\nSe ha producido un error\a\n");
+						PAUSE();
 						exit(1);
 					}
 				}
@@ -109,6 +114,8 @@ void MENU_PLANES() {
 			return;
 			
 		default:
+			printf("\nError de ingreso\n");
+			PAUSE();
 			break;
 		}
 	}
@@ -116,14 +123,13 @@ void MENU_PLANES() {
 
 void MENU_CLIENTES() {
 	char opc;
-	char cuit[12];
 	for(;;){
 		printf("\nAdministracion de clientes");
 		printf("\n1 - Mostrar clientes");
 		printf("\n2 - Agregar cliente");
 		printf("\n3 - Eliminar cliente");
-		printf("\n4 - Realizar un limpiado de clientes moradores");
-		printf("\n5 - Editar cliente");
+		printf("\n4 - Editar cliente");
+		printf("\n5 - Realizar un limpiado de clientes moradores");
 		printf("\nS - Salir al menu principal");
 		printf("\nOpcion: ");
 		fflush(stdin);
@@ -137,35 +143,53 @@ void MENU_CLIENTES() {
 			}else{
 			printf("Mostrando datos\n");
 			printf("DNI,CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago\n");
-			INORDER(Clientes);
+			PRINT_INORDER(Clientes);
 			PAUSE();
 			}
 			break;
 			
 		case '2':
-			do{
-			Clientes=INGRESAR_CLIENTE(Clientes,Planes);
-			PAUSE();
-			fflush(stdin);
-			printf("Desea agregar otro cliente?(S/N): ");
-			opc = getch();
-			opc = toupper(opc);
-			CLEAR();
-			}while(opc == 'S');
-			
+			do {
+				Clientes = INGRESAR_CLIENTE(Clientes,Planes);
+				PAUSE();
+				do {
+					printf("\nDesea agregar otro cliente?(S/N): ");
+					fflush(stdin);
+					opc = getch();
+					opc = toupper(opc);
+					if(opc != 'S' && opc != 'N') {
+						printf("\nError de ingreso\n");
+						PAUSE();
+					}
+				} while(opc != 'S' && opc != 'N');
+				CLEAR();
+			} while(opc == 'S');
 			break;
 			
 		case '3':
-			if(Clientes == NULL) {
-				printf("\nNo hay clientes en el arbol");
-			}else{
-			printf("Ingrese un cuit para eliminar del arbol de clientes\n");
-			scanf("%s",cuit);
-			Clientes = REMOVEN(Clientes,cuit);
+			if(!ELIMINAR_CLIENTE(Clientes)) {
+				if(GUARDAR_CLIENTES(Clientes,CLIENTESCSV) == 0) {
+					printf("Guardado correctamente\n");
+				}
+				else {
+					printf("No se pudo guardar el cambio\n");
+					while(Clientes != NULL) {
+						REMOVEN(Clientes, Clientes->cli.cuit);
+					}
+					Clientes = GEN_ARBOL(CLIENTESCSV);
+					if(Clientes == NULL) {
+						printf("\nSe ha producido un error\a\n");
+						PAUSE();
+						exit(1);
+					}
+				}
 			}
 			break;
 			
 		case '4':
+			break;
+			
+		case '5':
 			printf("Procediendo a eliminar clientes moradores de mas de 31 dias\n");
 			Clientes = ELIMINADODEMORADORES(Clientes);
 			printf("Elimado completado\n");
@@ -177,6 +201,8 @@ void MENU_CLIENTES() {
 			return;
 			
 		default:
+			printf("\nError de ingreso\n");
+			PAUSE();
 			break;
 		}
 	}
@@ -218,6 +244,8 @@ void MENU_FACTURA() {
 			return;
 			
 		default:
+			printf("\nError de ingreso\n");
+			PAUSE();
 			break;
 		}
 	}
@@ -235,9 +263,22 @@ int main() {
 		}
 	}
 	else {
+		printf("\nSe ha producido un error\a\n");
+		PAUSE();
 		exit(1);
 	}
-	Clientes = GEN_ARBOL(CLIENTESCSV);
+	if(COMPROBAR_CLIENTESCSV(CLIENTESCSV) == 0) {
+		Clientes = GEN_ARBOL(CLIENTESCSV);
+		if(Clientes == NULL) {
+			printf("\nADVERTENCIA: No hay ningun cliente en la lista");
+			PAUSE();
+		}
+	}
+	else {
+		printf("\nSe ha producido un error\a\n");
+		PAUSE();
+		exit(1);
+	}
 	for(;;){
 		printf("\nMenu");
 		printf("\n1 - Administrar planes");
@@ -268,6 +309,8 @@ int main() {
 			return 0;
 			
 		default:
+			printf("\nError de ingreso\n");
+			PAUSE();
 			break;
 		}
 	}

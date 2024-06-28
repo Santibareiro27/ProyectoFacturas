@@ -27,108 +27,6 @@ typedef struct Nodo {
 	int height;
 }Nodo;
 
-int GET_HEIGHT(Nodo *N) {
-	//Obtener altura del Nodo
-	if(N == NULL) {
-		return 0;
-	}
-	return N->height;
-} 
-
-int MAX(int a, int b) {
-	//Funcion para conseguir el maximo entre dos enteros
-	return (a > b)? a : b;
-} 
-
-Nodo *CREAR(cliente cli) {
-	//func: crea un nodo
-	Nodo *nn = (Nodo*)malloc(sizeof(Nodo));
-	if(nn == NULL) {
-		printf("\nERROR: Memoria insuficiente");
-		return NULL;
-	}
-	nn->cli=cli;
-	nn->left = NULL;
-	nn->right = NULL;
-	nn->height = 1;
-	
-	return nn;
-}
-
-Nodo *rightRotate(Nodo *y) {
-	// Funcion para rotar a la derecha el subárbol con raiz
-	Nodo *x = y->left;
-	Nodo *T2 = x->right;
-	// Realizar rotacion
-	x->right = y;
-	y->left = T2;
-	// Actualizar alturas
-	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
-	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
-	// Devuelve nueva raiz
-	return x;
-} 
-
-Nodo *leftRotate(Nodo *x) {
-	// Funcion para rotar a la izquierda el subárbol con raiz x
-	Nodo *y = x->right;
-	Nodo *T2 = y->left;
-	// Realizar rotacion
-	y->left = x;
-	x->right = T2;
-	// Actualizar alturas
-	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
-	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
-	// Devuelve nueva raiz
-	return y;
-} 
-
-int GET_BALANCE(Nodo *N){
-	if(N == NULL) {
-		return 0;
-	}
-	return GET_HEIGHT(N->left) - GET_HEIGHT(N->right);
-} 	
-	
-Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
-	//func: nsercion nodo
-	if(aux == NULL) {
-		return CREAR(cli);
-	}
-	if(strcmp(cli.cuit,aux->cli.cuit) < 0) {
-		aux->left = INSERTAR_NODO(aux->left, cli);
-	}
-	else if(strcmp(cli.cuit,aux->cli.cuit) > 0) {
-		aux->right = INSERTAR_NODO(aux->right, cli);
-	}
-	else {
-		return aux;
-	}
-	aux->height = 1 + MAX(GET_HEIGHT(aux->left),GET_HEIGHT(aux->right));
-	int balance = GET_BALANCE(aux);
-	// Left Left Caso
-	if (balance > 1 && strcmp(cli.cuit,aux->left->cli.cuit) < 0) {
-		return rightRotate(aux);
-	}
-	// Right Right Caso
-	if(balance < -1 && strcmp(cli.cuit,aux->right->cli.cuit) > 0) {
-		return leftRotate(aux);
-	}
-	// Left Right Caso
-	if (balance > 1 && strcmp(cli.cuit,aux->left->cli.cuit) > 0)
-	{
-		aux->left = leftRotate(aux->left);
-		return rightRotate(aux);
-	}
-	// Right Left Caso
-	if (balance < -1 && strcmp(cli.cuit,aux->right->cli.cuit) < 0)
-	{
-		aux->right = rightRotate(aux->right);
-		return leftRotate(aux);
-	} 
-	return aux;
-}
-
 time_t atotime_t(char *fecha) {
 	//func: convierte de fecha en un array a formato time_t
 	struct tm tm = {0};
@@ -154,6 +52,106 @@ void time_ttoa(time_t tiempo, char *buffer, size_t buffer_size) {
 	struct tm *tm_info;
 	tm_info = localtime(&tiempo);
 	strftime(buffer, buffer_size, "%d/%m/%Y", tm_info);
+}
+
+int GET_HEIGHT(Nodo *N) {
+	//Obtener altura del Nodo
+	if(N == NULL) {
+		return 0;
+	}
+	return N->height;
+} 
+
+int MAX(int a, int b) {
+	//Funcion para conseguir el maximo entre dos enteros
+	return (a > b)? a : b;
+} 
+
+Nodo *CREAR(cliente cli) {
+	//func: crea un nodo
+	Nodo *nn = (Nodo*)malloc(sizeof(Nodo));
+	if(nn == NULL) {
+		printf("\nERROR: Memoria insuficiente");
+		return NULL;
+	}
+	nn->cli = cli;
+	nn->left = NULL;
+	nn->right = NULL;
+	nn->height = 1;
+	return nn;
+}
+
+Nodo *rightRotate(Nodo *y) {
+	// Funcion para rotar a la derecha el subárbol con raiz
+	Nodo *x = y->left;
+	Nodo *T2 = x->right;
+	// Realizar rotacion
+	x->right = y;
+	y->left = T2;
+	// Actualizar alturas
+	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right)) + 1;
+	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right)) + 1;
+	// Devuelve nueva raiz
+	return x;
+} 
+
+Nodo *leftRotate(Nodo *x) {
+	// Funcion para rotar a la izquierda el subárbol con raiz x
+	Nodo *y = x->right;
+	Nodo *T2 = y->left;
+	// Realizar rotacion
+	y->left = x;
+	x->right = T2;
+	// Actualizar alturas
+	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
+	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
+	// Devuelve nueva raiz
+	return y;
+} 
+
+int GET_BALANCE(Nodo *N){
+	if(N == NULL) {
+		return 0;
+	}
+	return GET_HEIGHT(N->left) - GET_HEIGHT(N->right);
+} 	
+	
+Nodo *INSERTAR_NODO(Nodo *tree, cliente cli) {
+	//func: insercion nodo
+	if(tree == NULL) {
+		return CREAR(cli);
+	}
+	if(strcmp(cli.cuit,tree->cli.cuit) < 0) {
+		tree->left = INSERTAR_NODO(tree->left, cli);
+	}
+	else if(strcmp(cli.cuit,tree->cli.cuit) > 0) {
+		tree->right = INSERTAR_NODO(tree->right, cli);
+	}
+	else {
+		return tree;
+	}
+	tree->height = 1 + MAX(GET_HEIGHT(tree->left),GET_HEIGHT(tree->right));
+	
+	int balance = GET_BALANCE(tree);
+	// Left Left Caso
+	if (balance > 1 && strcmp(cli.cuit,tree->left->cli.cuit) < 0) {
+		return rightRotate(tree);
+	}
+	// Right Right Caso
+	if(balance < -1 && strcmp(cli.cuit,tree->right->cli.cuit) > 0) {
+		return leftRotate(tree);
+	}
+	// Left Right Caso
+	if (balance > 1 && strcmp(cli.cuit,tree->left->cli.cuit) > 0) {
+		tree->left = leftRotate(tree->left);
+		return rightRotate(tree);
+	}
+	// Right Left Caso
+	if (balance < -1 && strcmp(cli.cuit,tree->right->cli.cuit) < 0) {
+		tree->right = rightRotate(tree->right);
+		return leftRotate(tree);
+	} 
+	return tree;
 }
 
 Nodo *GEN_ARBOL(char *archname) {
@@ -220,9 +218,9 @@ Nodo *GEN_ARBOL(char *archname) {
 }
 
 
-void INORDER(struct Nodo *root) {
+void PRINT_INORDER(Nodo *root) {
 	if(root != NULL) {
-		INORDER(root->left);
+		PRINT_INORDER(root->left);
 		printf("\n%lu,", root->cli.dni);
 		printf("%s,", root->cli.cuit);
 		printf("%s,", root->cli.apellido);
@@ -234,9 +232,9 @@ void INORDER(struct Nodo *root) {
 		char fecha[11];
 		time_ttoa(root->cli.fechaUltPago, fecha, sizeof(fecha));
 		printf("%s,", fecha);
-		INORDER(root->right);
+		PRINT_INORDER(root->right);
 	}
-} 
+}
 
 char *GETMIN(Nodo *aux) {
 	while(aux->left != NULL) {
@@ -245,30 +243,39 @@ char *GETMIN(Nodo *aux) {
 	return aux->cli.cuit;
 }
 
-Nodo *REMOVEN(Nodo *aux, char *val) {
-	
+void FREECLI(Nodo *aux) {
+	free(aux->cli.apellido);
+	free(aux->cli.nombre);
+	free(aux->cli.iva);
+	free(aux->cli.direccion);
+	free(aux->cli.cuit);
+}
+
+Nodo *REMOVEN(Nodo *aux, char *key) {
 	if(aux == NULL) {
 		return NULL;
 	}
-	
-	if(strcmp(val,aux->cli.cuit) < 0) {
-		aux->left = REMOVEN(aux->left, val);
+	if(strcmp(key,aux->cli.cuit) < 0) {
+		aux->left = REMOVEN(aux->left, key);
 	}
-	else if(strcmp(val,aux->cli.cuit) > 0) {
-		aux->right = REMOVEN(aux->right, val);
+	else if(strcmp(key,aux->cli.cuit) > 0) {
+		aux->right = REMOVEN(aux->right, key);
 	}
 	else {
 		if(aux->left == NULL && aux->right == NULL) {
+			FREECLI(aux);
 			free(aux);
 			return NULL;
 		}
 		else if(aux->left == NULL) {
 			Nodo *temp = aux->right;
+			FREECLI(aux);
 			free(aux);
 			return temp;
 		}
 		else if(aux->right == NULL) {
 			Nodo *temp = aux->left;
+			FREECLI(aux);
 			free(aux);
 			return temp;
 		}
@@ -280,7 +287,6 @@ Nodo *REMOVEN(Nodo *aux, char *val) {
 		}
 	}
 	return aux;
-	
 }
 
 void GUARDADO(struct Nodo *root, FILE *arch) {
@@ -327,7 +333,71 @@ Nodo *BUSCAR(Nodo *aux, char *cui) {
 	return NULL;
 }
 
-Nodo *INGRESAR_CLIENTE(Nodo *c, plan *planes){
+Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
+	//fun: Busca un cliente usando como dato de busqueda su DNI
+	if(aux == NULL) {
+		return NULL;
+	}
+	if(dni == aux->cli.dni) {
+		return aux;
+	}
+	else if(dni < aux->cli.dni) {
+		return BUSCAR_DNI(aux->left, dni);
+	}
+	else if(dni > aux->cli.dni) {
+		return BUSCAR_DNI(aux->right, dni);
+	}
+	return NULL;
+}
+
+int ELIMINAR_CLIENTE(Nodo *tree) {
+	char key[12], opc;
+	if(tree == NULL) {
+		printf("\nNo hay clientes en el arbol");
+		return 2;
+	}
+	do {
+		opc = 't';
+		printf("Ingrese el DNI o CUIT/CUIL de un cliente para eliminarlo: ");
+		fflush(stdin);
+		scanf("%s", key);
+		if(strlen(key) != 11 && strlen(key) != 8) {
+			printf("\nError de ingreso\n");
+			opc = 'f';
+			PAUSE();
+		}
+		else {
+			for(int i = 0; i < strlen(key); i++) {
+				if(isdigit(key[i]) == 0) {
+					printf("\nError de ingreso\n");
+					opc = 'f';
+					PAUSE();
+					break;
+				}
+			}
+		}
+	} while(opc == 'f');
+	if(strlen(key) == 8) {
+		Nodo *aux = BUSCAR_DNI(tree,atoi(key));
+		if(aux == NULL) {
+			printf("\nNo se encontro el cliente\n");
+			PAUSE();
+			return 1;
+		}
+		strcpy(key, aux->cli.cuit);
+	}
+	else {
+		if(BUSCAR(tree,key) == NULL) {
+			printf("\nNo se encontro el cliente\n");
+			PAUSE();
+			return 1;
+		}
+	}
+	tree = REMOVEN(tree,key);
+	return 0;
+}
+
+Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 	printf("\nIngrese los datos del cliente\n");
 	char dato[100], opc;
 	cliente datosCli;
@@ -352,7 +422,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *c, plan *planes){
 				}
 			}
 		}
-		if(BUSCAR(c,dato) != NULL) {
+		if(BUSCAR(tree,dato) != NULL) {
 			opc = 'f';
 			printf("\nEste CUIT/CUIL ya ha sido registrado\n");
 			PAUSE();
@@ -499,13 +569,15 @@ Nodo *INGRESAR_CLIENTE(Nodo *c, plan *planes){
 		}
 	} while(datosCli.fechaUltPago < 0);
 	
-	c = INSERTAR_NODO(c,datosCli);
-	if(GUARDAR_CLIENTES(c,CLIENTESCSV)==0){
+	tree = INSERTAR_NODO(tree,datosCli);
+	
+	if(GUARDAR_CLIENTES(tree,CLIENTESCSV)==0){
 		printf("Guardado correctamente\n");
 	}else{
-		c=REMOVEN(c,datosCli.cuit);
+		printf("No se pudo guardar el cambio\n");
+		tree = REMOVEN(tree,datosCli.cuit);
 	}
-	return c;
+	return tree;
 }
 
 Nodo *ELIMINADODEMORADORES(Nodo *root) {

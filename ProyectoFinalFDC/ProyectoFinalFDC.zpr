@@ -19,15 +19,15 @@ current_source=main.c
 path_char=\
 [source]
 path=main.c
-cursor=139:10
+cursor=307:27
 open=true
 [header]
 path=planeslib.h
-cursor=2:17
+cursor=13:15
 open=true
 [header]
 path=arbolib.h
-cursor=236:2
+cursor=241:2
 open=true
 [other]
 path=planes.csv
@@ -35,7 +35,7 @@ cursor=4:0
 open=true
 [other]
 path=clientes.csv
-cursor=14:0
+cursor=5:36
 open=true
 [config]
 name=Debug
