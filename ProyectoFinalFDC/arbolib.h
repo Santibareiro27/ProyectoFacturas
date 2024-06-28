@@ -1,42 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <stdio.h>
 #include <locale.h>
-#include <stdlib.h>
+#include <ctype.h>
+#include "planeslib.h"
+#define CLIENTESCSV "clientes.csv"
+//Eliminar a los usuarios por medio de eleccion de dni
+//Hacer una funcion de busqueda en el arbol que revise la fecha de los clientes 
+// y si la dif con respecto al de la maquina es mayor o igual a 31 dias entonces lo elimina
 
-typedef struct cliente cliente;
 //Define estructura de cli
-struct cliente {
-	int cuit,mb;
-	char *apellido,*nombre,*iva,*direccion;
+typedef struct cliente {
+	unsigned long int dni;
+	int mb;
+	char *apellido,*nombre,*iva,*direccion,*cuit;
 	char zona;
 	time_t fechaUltPago;
-};
+}cliente;
 
-typedef struct Nodo Nodo;
 //Define nodo de arbol
-struct Nodo {
+typedef struct Nodo {
 	cliente cli;
-	Nodo *left;
-	Nodo *right;
+	struct Nodo *left;
+	struct Nodo *right;
 	int height;
-};
+}Nodo;
 
-//Obtener altura del Nodo
 int GET_HEIGHT(Nodo *N) {
+	//Obtener altura del Nodo
 	if(N == NULL) {
 		return 0;
 	}
 	return N->height;
 } 
 
-//Funcion para conseguir el maximo entre dos enteros
 int MAX(int a, int b) {
+	//Funcion para conseguir el maximo entre dos enteros
 	return (a > b)? a : b;
 } 
 
-//Crea un nodo
 Nodo *CREAR(cliente cli) {
+	//func: crea un nodo
 	Nodo *nn = (Nodo*)malloc(sizeof(Nodo));
 	if(nn == NULL) {
 		printf("\nERROR: Memoria insuficiente");
@@ -50,9 +55,8 @@ Nodo *CREAR(cliente cli) {
 	return nn;
 }
 
-// Funcion para rotar a la derecha el subárbol con raiz
-Nodo *rightRotate(Nodo *y)
-{
+Nodo *rightRotate(Nodo *y) {
+	// Funcion para rotar a la derecha el subárbol con raiz
 	Nodo *x = y->left;
 	Nodo *T2 = x->right;
 	// Realizar rotacion
@@ -65,9 +69,8 @@ Nodo *rightRotate(Nodo *y)
 	return x;
 } 
 
-// Funcion para rotar a la izquierda el subárbol con raiz x
-Nodo *leftRotate(Nodo *x)
-{
+Nodo *leftRotate(Nodo *x) {
+	// Funcion para rotar a la izquierda el subárbol con raiz x
 	Nodo *y = x->right;
 	Nodo *T2 = y->left;
 	// Realizar rotacion
@@ -85,17 +88,17 @@ int GET_BALANCE(Nodo *N){
 		return 0;
 	}
 	return GET_HEIGHT(N->left) - GET_HEIGHT(N->right);
-} 
+} 	
 	
-	//Insercion nodo
 Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
+	//func: nsercion nodo
 	if(aux == NULL) {
 		return CREAR(cli);
 	}
-	if(cli.cuit < aux->cli.cuit) {
+	if(strcmp(cli.cuit,aux->cli.cuit) < 0) {
 		aux->left = INSERTAR_NODO(aux->left, cli);
 	}
-	else if(cli.cuit > aux->cli.cuit) {
+	else if(strcmp(cli.cuit,aux->cli.cuit) > 0) {
 		aux->right = INSERTAR_NODO(aux->right, cli);
 	}
 	else {
@@ -104,21 +107,21 @@ Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
 	aux->height = 1 + MAX(GET_HEIGHT(aux->left),GET_HEIGHT(aux->right));
 	int balance = GET_BALANCE(aux);
 	// Left Left Caso
-	if (balance > 1 && cli.cuit < aux->left->cli.cuit) {
+	if (balance > 1 && strcmp(cli.cuit,aux->left->cli.cuit) < 0) {
 		return rightRotate(aux);
 	}
 	// Right Right Caso
-	if(balance < -1 && cli.cuit > aux->right->cli.cuit) {
+	if(balance < -1 && strcmp(cli.cuit,aux->right->cli.cuit) > 0) {
 		return leftRotate(aux);
 	}
 	// Left Right Caso
-	if (balance > 1 && cli.cuit > aux->left->cli.cuit)
+	if (balance > 1 && strcmp(cli.cuit,aux->left->cli.cuit) > 0)
 	{
 		aux->left = leftRotate(aux->left);
 		return rightRotate(aux);
 	}
 	// Right Left Caso
-	if (balance < -1 && cli.cuit < aux->right->cli.cuit)
+	if (balance < -1 && strcmp(cli.cuit,aux->right->cli.cuit) < 0)
 	{
 		aux->right = rightRotate(aux->right);
 		return leftRotate(aux);
@@ -127,6 +130,7 @@ Nodo *INSERTAR_NODO(Nodo *aux, cliente cli) {
 }
 
 time_t atotime_t(char *fecha) {
+	//func: convierte de fecha en un array a formato time_t
 	struct tm tm = {0};
 	time_t t;
 	int dia, mes, anio;
@@ -146,13 +150,14 @@ time_t atotime_t(char *fecha) {
 }
 
 void time_ttoa(time_t tiempo, char *buffer, size_t buffer_size) {
+	//func: convierte de formato time_t a fecha en un array
 	struct tm *tm_info;
 	tm_info = localtime(&tiempo);
 	strftime(buffer, buffer_size, "%d/%m/%Y", tm_info);
 }
 
-//Genera arbol de clientes
 Nodo *GEN_ARBOL(char *archname) {
+	//func: genera arbol de clientes
 	Nodo *tree = NULL;
 	cliente cli;
 	FILE *arch;
@@ -163,10 +168,12 @@ Nodo *GEN_ARBOL(char *archname) {
 	}
 	fgets(linea, sizeof(linea), arch);
 	while (fgets(linea, sizeof(linea), arch)) {
-		
 		dato = strtok(linea, ",");
-		cli.cuit = atoi(dato);
+		cli.dni = atol(dato);
 		
+		dato = strtok(NULL, ",");
+		cli.cuit = (char*)malloc(strlen(dato)+1);
+		strcpy(cli.cuit,dato);
 		
 		dato = strtok(NULL, ",");
 		for(int i=0;i<strlen(dato);i++){
@@ -201,7 +208,7 @@ Nodo *GEN_ARBOL(char *archname) {
 		dato = strtok(NULL, ",");
 		cli.zona = tolower(*dato);
 		dato = strtok(NULL, ",");
-		cli.mb = atof(dato);
+		cli.mb = atoi(dato);
 		
 		dato = strtok(NULL, ",");
 		cli.fechaUltPago=atotime_t(dato);
@@ -213,9 +220,11 @@ Nodo *GEN_ARBOL(char *archname) {
 }
 
 
-void PREORDER(struct Nodo *root) {
+void INORDER(struct Nodo *root) {
 	if(root != NULL) {
-		printf("%d,", root->cli.cuit);
+		INORDER(root->left);
+		printf("\n%lu,", root->cli.dni);
+		printf("%s,", root->cli.cuit);
 		printf("%s,", root->cli.apellido);
 		printf("%s,", root->cli.nombre);
 		printf("%s,", root->cli.iva);
@@ -225,27 +234,300 @@ void PREORDER(struct Nodo *root) {
 		char fecha[11];
 		time_ttoa(root->cli.fechaUltPago, fecha, sizeof(fecha));
 		printf("%s,", fecha);
-		PREORDER(root->left);
-		PREORDER(root->right);
+		INORDER(root->right);
 	}
 } 
 
-/*Busca el precio del cli usando como
-dato de busqueda el cuit del cliente*/
-Nodo *BUSCAR(Nodo *aux, int val) {
+char *GETMIN(Nodo *aux) {
+	while(aux->left != NULL) {
+		aux = aux->left;
+	}
+	return aux->cli.cuit;
+}
+
+Nodo *REMOVEN(Nodo *aux, char *val) {
+	
 	if(aux == NULL) {
 		return NULL;
 	}
-	if(val == aux->cli.cuit) {
+	
+	if(strcmp(val,aux->cli.cuit) < 0) {
+		aux->left = REMOVEN(aux->left, val);
+	}
+	else if(strcmp(val,aux->cli.cuit) > 0) {
+		aux->right = REMOVEN(aux->right, val);
+	}
+	else {
+		if(aux->left == NULL && aux->right == NULL) {
+			free(aux);
+			return NULL;
+		}
+		else if(aux->left == NULL) {
+			Nodo *temp = aux->right;
+			free(aux);
+			return temp;
+		}
+		else if(aux->right == NULL) {
+			Nodo *temp = aux->left;
+			free(aux);
+			return temp;
+		}
+		else {
+			char rmin[12];
+			strcpy(rmin,GETMIN(aux->right));
+			aux->cli.cuit = rmin;
+			aux->right = REMOVEN(aux->right, rmin);
+		}
+	}
+	return aux;
+	
+}
+
+void GUARDADO(struct Nodo *root, FILE *arch) {
+	//fun: recorre el arbol cargando datos de clientes al archivo de clientes
+	//pre: arbol que recorre y nombre del archivo destino
+	if(root != NULL) {
+		char fecha[11];
+		time_ttoa(root->cli.fechaUltPago,fecha,sizeof(fecha));
+		fprintf(arch, "%lu,%s,%s,%s,%s,%s,%c,%d,%s,\n", root->cli.dni,root->cli.cuit,root->cli.apellido,root->cli.nombre,root->cli.iva,root->cli.direccion,root->cli.zona,root->cli.mb,fecha);
+		GUARDADO(root->left, arch);
+		GUARDADO(root->right, arch);
+	}
+} 
+
+int GUARDAR_CLIENTES(Nodo *root, char *archname) {
+	//fun: guarda los clientes en la base de datos
+	//pre: arbol a guardar y nombre del archivo destino
+	//pos: codigo de exito/error
+	FILE *arch = fopen(archname,"w");
+	if(!arch) {
+		printf("\nERROR: No se pudieron guardar los cambios");
+		return 1;
+	}
+	fprintf(arch, "DNI,CUIT/CUIL,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago,\n");
+	GUARDADO(root, arch);
+	fclose(arch);
+	return 0;
+}
+
+Nodo *BUSCAR(Nodo *aux, char *cui) {
+	//fun: Busca un cliente usando como dato de busqueda su CUIL/CUIT
+	if(aux == NULL) {
+		return NULL;
+	}
+	if(strcmp(cui,aux->cli.cuit) == 0) {
 		return aux;
 	}
-	else if(val < aux->cli.cuit) {
-		return BUSCAR(aux->left, val);
+	else if(strcmp(cui,aux->cli.cuit) < 0) {
+		return BUSCAR(aux->left, cui);
 	}
-	else if(val > aux->cli.cuit) {
-		return BUSCAR(aux->right, val);
+	else if(strcmp(cui,aux->cli.cuit) > 0) {
+		return BUSCAR(aux->right, cui);
 	}
 	return NULL;
+}
+
+Nodo *INGRESAR_CLIENTE(Nodo *c, plan *planes){
+	printf("\nIngrese los datos del cliente\n");
+	char dato[100], opc;
+	cliente datosCli;
+	//carga de CUIT/CUIL
+	do {
+		opc = 't';
+		printf("\nCUIT/CUIL (sin espacios ni guiones): ");
+		fflush(stdin);
+		scanf("%s", dato);
+		if(strlen(dato) != 11) {
+			printf("\nError de ingreso\n");
+			opc = 'f';
+			PAUSE();
+		}
+		else {
+			for(int i = 0; i < 11; i++) {
+				if(isdigit(dato[i]) == 0) {
+					printf("\nError de ingreso\n");
+					opc = 'f';
+					PAUSE();
+					break;
+				}
+			}
+		}
+		if(BUSCAR(c,dato) != NULL) {
+			opc = 'f';
+			printf("\nEste CUIT/CUIL ya ha sido registrado\n");
+			PAUSE();
+		}
+	} while(opc == 'f');
+	datosCli.cuit = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.cuit,dato);
+	CLEAR();
+	//carga de DNI
+	if(*(datosCli.cuit) == '2') {
+		strcpy(dato,(datosCli.cuit + 2));
+		dato[8] = 0;
+		datosCli.dni = atoi(dato);
+		CLEAR();
+	}
+	else {
+		datosCli.dni = 0;
+	}
+	if(*(datosCli.cuit) == '2') {
+		printf("\nApellido: ");
+		fflush(stdin);
+		gets(dato);
+		for(int i=0;i<strlen(dato);i++){
+			dato[i] = toupper(dato[i]);
+		}
+		CLEAR();
+	}
+	else {
+		strcpy(dato,"0");
+	}
+	datosCli.apellido = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.apellido,dato);
+	
+	printf("\nNombre: ");
+	fflush(stdin);
+	gets(dato);
+	for(int i=0;i<strlen(dato);i++){
+		dato[i] = tolower(dato[i]);
+	}
+	datosCli.nombre = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.nombre,dato);
+	CLEAR();
+	do {
+		printf("\nCondicion frente al IVA");
+		printf("\n1) Responsable Inscripto");
+		printf("\n2) Monotributista");
+		printf("\n3) Consumidor Final");
+		printf("\n4) Sujeto Extento");
+		printf("\nOpcion: ");
+		fflush(stdin);
+		opc = getchar();
+		switch(opc) {
+			
+		case '1':
+			strcpy(dato,"RI");
+			break;
+			
+		case '2':
+			strcpy(dato,"MT");
+			break;
+			
+		case '3':
+			strcpy(dato,"CF");
+			break;
+			
+		case '4':
+			strcpy(dato,"SE");
+			break;
+			
+		default:
+			printf("\nError de ingreso\n");
+			PAUSE();
+			break;
+		}
+	} while(opc < '1' || opc > '4');
+	datosCli.iva = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.iva,dato);
+	CLEAR();
+	printf("\nDireccion: ");
+	fflush(stdin);
+	gets(dato);
+	datosCli.direccion = (char*)malloc(strlen(dato)+1);
+	strcpy(datosCli.direccion,dato);
+	CLEAR();
+	do {
+		printf("\nZona(a/b/c): ");
+		fflush(stdin);
+		datosCli.zona = tolower(getchar());
+		if(datosCli.zona < 'a' || datosCli.zona > 'c') {
+			
+		}
+	} while(datosCli.zona < 'a' || datosCli.zona > 'c');
+	datosCli.zona = tolower(datosCli.zona);
+	CLEAR();
+	plan *aux;
+	opc = 'f';
+	do {
+		MOSTRAR_PLANES(planes);
+		printf("\nPlan en MB: ");
+		fflush(stdin);
+		if(scanf("%d",&datosCli.mb) == 0) {
+			datosCli.mb = 0;
+		}
+		if(datosCli.mb > 0) {
+			aux = planes;
+			opc = 'f';
+			while(aux != NULL && opc != 't') {
+				if(aux->mb == datosCli.mb) {
+					opc = 't';
+					break;
+				}
+				aux = aux->sig;
+			}
+			if(opc == 'f') {
+				printf("\nNo se encontro el plan\n");
+				PAUSE();
+			}
+			else if(datosCli.zona > aux->zona) {
+				opc = 'f';
+				printf("\nEl plan seleccionado(%c) no es compatible con esta zona(%c)\n",datosCli.zona,aux->zona);
+				PAUSE();
+			}
+		}
+		else {
+			printf("\nError de ingreso\n");
+			PAUSE();
+		}
+	} while(opc == 'f');
+	CLEAR();
+	time_t rawtime;
+	time(&rawtime);
+	do {
+		printf("\nFecha del ultimo pago (dd/mm/yyyy): ");
+		fflush(stdin);
+		gets(dato);
+		datosCli.fechaUltPago = atotime_t(dato);
+		if(datosCli.fechaUltPago == -1) {
+			PAUSE();
+		}
+		else if(difftime(rawtime,datosCli.fechaUltPago) < 0) {
+			datosCli.fechaUltPago = -1;
+			printf("\nFecha no valida");
+			PAUSE();
+		}
+	} while(datosCli.fechaUltPago < 0);
+	
+	c = INSERTAR_NODO(c,datosCli);
+	if(GUARDAR_CLIENTES(c,CLIENTESCSV)==0){
+		printf("Guardado correctamente\n");
+	}else{
+		c=REMOVEN(c,datosCli.cuit);
+	}
+	return c;
+}
+
+Nodo *ELIMINADODEMORADORES(Nodo *root) {
+	double diff = 0;
+	if(root == NULL){
+		return NULL;
+	}
+	time_t rawtime;
+	time (&rawtime);
+	diff = difftime(rawtime,root->cli.fechaUltPago);
+	printf("%lf", diff);
+	if(diff>2678400){
+		root=REMOVEN(root,root->cli.cuit);
+		
+	}
+	if(root!=NULL){
+	root->left=ELIMINADODEMORADORES(root->left);
+	}
+	if(root!=NULL){
+	root->right=ELIMINADODEMORADORES(root->right);
+	}
+	return root;	
 }
 
 int COMPROBAR_CLIENTESCSV(char *archname) {
@@ -257,7 +539,7 @@ int COMPROBAR_CLIENTESCSV(char *archname) {
 			printf("\nERROR: No se pudo crear el archivo de planes");
 			return 1;
 		}
-		fputs("cuit,Apellido,Nombre,CUIT,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago,\n",arch);
+		fputs("DNI,CUIT/CUIL,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago,\n",arch);
 	}
 	fclose(arch);
 	return 0;
