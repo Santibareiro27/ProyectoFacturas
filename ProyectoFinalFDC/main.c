@@ -3,18 +3,13 @@
 #include <conio.h>
 #include <string.h>
 #include <ctype.h>
-#include "planeslib.h"
 #include "arbolib.h"
-
 #define PLANESCSV "planes.csv"
 #define CLIENTESCSV "clientes.csv"
 #define TEMPCSV "temp.csv"
 
 /*
 Crear un apartado de gestion de clientes:
-*Donde los clientes estaran guardados en un arbol AVL
-*Datos en el archivo csv:DNI,Apellido,Nombre,CUIT,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago
-*Añadir clientes
 *Dar de baja cliente, lo borra del arbol AVL y del archivo
 *Cambiar plan del cliente, dice el DNI y nombre, y si su zona lo permite cambiar el plan
 *Analisis de cantidad de clientes deudores
@@ -27,20 +22,7 @@ Crear un apartado de gestion de planes:
 
 //nodo Arbol = NULL; //arbol de clientes
 plan *Planes = NULL;
-Nodo *Clientes = NULL;
-
-void CLEAR() {
-	//fun: limpia pantalla
-	system("cls");
-}
-
-void PAUSE() {
-	//fun: genera una pausa
-	printf("\n\nPresione una tecla para continuar...");
-	fflush(stdin);
-	getch();
-	CLEAR();
-}
+Nodo *Clientes;
 
 void MENU_PLANES() {
 	char opc;
@@ -134,12 +116,14 @@ void MENU_PLANES() {
 
 void MENU_CLIENTES() {
 	char opc;
+	int dni;
 	for(;;){
 		printf("\nAdministracion de clientes");
 		printf("\n1 - Mostrar clientes");
-		printf("\n2 - Crear cliente");
+		printf("\n2 - Agregar cliente");
 		printf("\n3 - Eliminar cliente");
-		printf("\n4 - Editar cliente");
+		printf("\n4 - Realizar un limpiado de clientes moradores");
+		printf("\n5 - Editar cliente");
 		printf("\nS - Salir al menu principal");
 		printf("\nOpcion: ");
 		fflush(stdin);
@@ -148,22 +132,44 @@ void MENU_CLIENTES() {
 		switch(opc) {
 			
 		case '1':
+			if(Clientes==NULL){
+				printf("No hay clientes en el arbol\n");
+			}else{
 			printf("Mostrando datos\n");
 			printf("CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago\n");
 			PREORDER(Clientes);
 			PAUSE();
+			}
 			break;
 			
 		case '2':
+			do{
+			Clientes=INGRESAR_CLIENTE(Clientes,Planes);
+			PAUSE();
+			fflush(stdin);
+			printf("Desea agregar otro cliente? S/N\n");
+			opc = getch();
+			opc=toupper(opc);
+			CLEAR();
+			}while(opc=='S');
 			
 			break;
 			
 		case '3':
-			
+			if(Clientes == NULL) {
+				printf("\nNo hay clientes en el arbol");
+			}else{
+			printf("Ingrese un dni para eliminar del arbol de clientes\n");
+			scanf("%d",&dni);
+			Clientes=REMOVEN(Clientes,dni);
+			}
 			break;
 			
 		case '4':
-			
+			printf("Procediendo a eliminar clientes moradores de mas de 31 dias\n");
+			Clientes=ELIMINADODEMORADORES(Clientes);
+			printf("Elimado completado\n");
+			PAUSE();
 			break;
 			
 		case 's':
@@ -180,10 +186,10 @@ void MENU_FACTURA() {
 	char opc;
 	for(;;){
 		printf("\nAdministracion de facturas");
-		printf("\n1 - Mostrar formato de factura");
-		printf("\n2 - Generar facturas");
-		printf("\n3 - Modificar recargo por mora");
-		printf("\n4 - Modificar fechas limite de pago");
+		printf("\n1 - Generar facturas");
+		printf("\n2 - Modificar recargo por mora");
+		printf("\n3 - Modificar fechas limite de pago");
+		printf("\n4 - Analisis de clientes deudores");
 		printf("\nS - Salir al menu principal");
 		printf("\nOpcion: ");
 		fflush(stdin);

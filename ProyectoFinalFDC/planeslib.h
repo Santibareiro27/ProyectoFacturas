@@ -9,8 +9,21 @@ typedef struct plan{ //define estructura de lista de planes
 	struct plan *sig;
 }plan;
 
+void CLEAR() {
+	//func: limpia pantalla
+	system("cls");
+}
+
+void PAUSE() {
+	//func: genera una pausa
+	printf("\n\nPresione una tecla para continuar...");
+	fflush(stdin);
+	getch();
+	CLEAR();
+}
+
 void MOSTRAR_PLANES(plan *lista) {
-	//fun: muestra la lista
+	//func: muestra la lista
 	//pre: lista a leer
 	if(lista == NULL) {
 		printf("\nLa lista esta vacia");
@@ -22,7 +35,7 @@ void MOSTRAR_PLANES(plan *lista) {
 }
 
 void LIMPIAR_PLANES(plan **aux) {
-	//fun: elimina la lista y limpia la memoria
+	//func: elimina la lista y limpia la memoria
 	//pre: lista por referencia
 	plan *memory;
 	while(*aux != NULL) {
@@ -33,7 +46,7 @@ void LIMPIAR_PLANES(plan **aux) {
 }
 
 int COMPROBAR_CSV(char *archname) {
-	//fun: comprueba si el archivo csv
+	//func: comprueba si el archivo csv
 	//de planes existe, sino lo crea
 	//pre: nombre del archivo
 	//pos: codigo de exito/error
@@ -52,7 +65,7 @@ int COMPROBAR_CSV(char *archname) {
 }
 
 int GUARDAR_PLANES(plan *lista, char *archname) {
-	//fun: guarda la lista en la base de datos
+	//func: guarda la lista en la base de datos
 	//pre: lista a guardar y nombre del archivo destino
 	//pos: codigo de exito/error
 	FILE *arch = fopen(archname,"w");
@@ -70,7 +83,7 @@ int GUARDAR_PLANES(plan *lista, char *archname) {
 }
 
 void EDITAR_PLAN(plan *aux) {
-	//fun: edita un plan existente
+	//func: edita un plan existente
 	//pre: lista por referencia
 	int num;
 	do {
@@ -92,13 +105,13 @@ void EDITAR_PLAN(plan *aux) {
 	}
 	printf("\nPlan de: %d gb\nZona: %c\nPrecio: %.2lf\n", aux->mb, aux->zona, aux->precio);
 	do {
-		printf("\nIngrese la nueva zona disponible del plan (a,b,c,d): ");
+		printf("\nIngrese la nueva zona disponible del plan (a,b,c): ");
 		fflush(stdin);
 		aux->zona = tolower(getchar());
-		if(aux->zona < 'a' || aux->zona > 'd') {
+		if(aux->zona < 'a' || aux->zona > 'c') {
 			printf("\nERROR: Ingreso no valido");
 		}
-	} while(aux->zona < 'a' || aux->zona > 'd');
+	} while(aux->zona < 'a' || aux->zona > 'c');
 	do {
 		printf("\nIngrese el nuevo precio del plan (numero mayor a 0): ");
 		fflush(stdin);
@@ -112,7 +125,7 @@ void EDITAR_PLAN(plan *aux) {
 }
 
 int ELIMINAR_PLAN(plan **lista) {
-	//fun: elimina un plan existente
+	//func: elimina un plan existente
 	//pre: lista por referencia
 	//pos: codigo de exito/error
 	int elim;
@@ -149,7 +162,7 @@ int ELIMINAR_PLAN(plan **lista) {
 }
 
 int CREAR_PLAN(plan **lista) {
-	//fun: crea plan nuevo
+	//func: crea plan nuevo
 	//pre: lista por referencia
 	//pos: codigo de exito/error
 	plan *nn = (plan*)malloc(sizeof(plan));
@@ -179,13 +192,13 @@ int CREAR_PLAN(plan **lista) {
 		}
 	} while(nn->mb <= 0);
 	do {
-		printf("\nIngrese la zona disponible del plan (a,b,c,d): ");
+		printf("\nIngrese la zona disponible del plan (a,b,c): ");
 		fflush(stdin);
 		nn->zona = tolower(getchar());
-		if(nn->zona < 'a' || nn->zona > 'd') {
+		if(nn->zona < 'a' || nn->zona > 'c') {
 			printf("\nERROR: Ingreso no valido\n");
 		}
-	} while(nn->zona < 'a' || nn->zona > 'd');
+	} while(nn->zona < 'a' || nn->zona > 'c');
 	do {
 		printf("\nIngrese el precio del plan (numero mayor a 0): ");
 		fflush(stdin);
@@ -202,7 +215,7 @@ int CREAR_PLAN(plan **lista) {
 }
 
 int GEN_LISTA_PLANES(plan **lista, char *archname) {
-	//fun: genera la lista de planes a partir del archivo
+	//func: genera la lista de planes a partir del archivo
 	//pre: lista por referencia y archivo fuente
 	//pos: codigo de exito/error
 	plan *nn;
