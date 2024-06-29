@@ -45,7 +45,7 @@ void LIMPIAR_PLANES(plan **aux) {
 	}
 }
 
-int COMPROBAR_CSV(char *archname) {
+int COMPROBAR_PLANESCSV(char *archname) {
 	//func: comprueba si el archivo csv
 	//de planes existe, sino lo crea
 	//pre: nombre del archivo
@@ -219,9 +219,8 @@ int GEN_LISTA_PLANES(plan **lista, char *archname) {
 	//pre: lista por referencia y archivo fuente
 	//pos: codigo de exito/error
 	plan *nn;
-	FILE *arch;
 	char linea[50], *dato;
-	arch = fopen(archname,"r");
+	FILE *arch = fopen(archname,"r");
 	if(!arch) {
 		printf("\nERROR: No se encontro \"%s\"", archname);
 		return 1;

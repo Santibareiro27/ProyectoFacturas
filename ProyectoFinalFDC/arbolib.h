@@ -82,7 +82,7 @@ Nodo *CREAR(cliente cli) {
 }
 
 Nodo *rightRotate(Nodo *y) {
-	// Funcion para rotar a la derecha el subárbol con raiz
+	// Funcion para rotar a la derecha el subÃ¡rbol con raiz
 	Nodo *x = y->left;
 	Nodo *T2 = x->right;
 	// Realizar rotacion
@@ -96,7 +96,7 @@ Nodo *rightRotate(Nodo *y) {
 } 
 
 Nodo *leftRotate(Nodo *x) {
-	// Funcion para rotar a la izquierda el subárbol con raiz x
+	// Funcion para rotar a la izquierda el subÃ¡rbol con raiz x
 	Nodo *y = x->right;
 	Nodo *T2 = y->left;
 	// Realizar rotacion
@@ -350,10 +350,11 @@ Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
 	return NULL;
 }
 
-int ELIMINAR_CLIENTE(Nodo *tree) {
+int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
 	char key[12], opc;
 	if(tree == NULL) {
 		printf("\nNo hay clientes en el arbol");
+		(*band)=0;
 		return 2;
 	}
 	do {
@@ -361,15 +362,15 @@ int ELIMINAR_CLIENTE(Nodo *tree) {
 		printf("Ingrese el DNI o CUIT/CUIL de un cliente para eliminarlo: ");
 		fflush(stdin);
 		scanf("%s", key);
-		if(strlen(key) != 11 && strlen(key) != 8) {
-			printf("\nError de ingreso\n");
+		if(strlen(key) != 11 && strlen(key) != 8 && strlen(key) != 7) {
+			printf("\nERROR: Ingreso no valido\n");
 			opc = 'f';
 			PAUSE();
 		}
 		else {
 			for(int i = 0; i < strlen(key); i++) {
 				if(isdigit(key[i]) == 0) {
-					printf("\nError de ingreso\n");
+					printf("\nERROR: Ingreso no valido\n");
 					opc = 'f';
 					PAUSE();
 					break;
@@ -377,11 +378,12 @@ int ELIMINAR_CLIENTE(Nodo *tree) {
 			}
 		}
 	} while(opc == 'f');
-	if(strlen(key) == 8) {
+	if(strlen(key) == 8 || strlen(key) == 7) {
 		Nodo *aux = BUSCAR_DNI(tree,atoi(key));
 		if(aux == NULL) {
 			printf("\nNo se encontro el cliente\n");
 			PAUSE();
+			(*band)=0;
 			return 1;
 		}
 		strcpy(key, aux->cli.cuit);
@@ -390,6 +392,7 @@ int ELIMINAR_CLIENTE(Nodo *tree) {
 		if(BUSCAR(tree,key) == NULL) {
 			printf("\nNo se encontro el cliente\n");
 			PAUSE();
+			(*band)=0;
 			return 1;
 		}
 	}
@@ -408,14 +411,14 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		fflush(stdin);
 		scanf("%s", dato);
 		if(strlen(dato) != 11) {
-			printf("\nError de ingreso\n");
+			printf("\nERROR: Ingreso no valido\n");
 			opc = 'f';
 			PAUSE();
 		}
 		else {
 			for(int i = 0; i < 11; i++) {
 				if(isdigit(dato[i]) == 0) {
-					printf("\nError de ingreso\n");
+					printf("\nERROR: Ingreso no valido\n");
 					opc = 'f';
 					PAUSE();
 					break;
@@ -493,7 +496,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 			break;
 			
 		default:
-			printf("\nError de ingreso\n");
+			printf("\nERROR: Ingreso no valido\n");
 			PAUSE();
 			break;
 		}
@@ -512,7 +515,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		fflush(stdin);
 		datosCli.zona = tolower(getchar());
 		if(datosCli.zona < 'a' || datosCli.zona > 'c') {
-			
+			printf("\nERROR: Ingreso no valido\n");
 		}
 	} while(datosCli.zona < 'a' || datosCli.zona > 'c');
 	datosCli.zona = tolower(datosCli.zona);
@@ -547,7 +550,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 			}
 		}
 		else {
-			printf("\nError de ingreso\n");
+			printf("\nERROR: Ingreso no valido\n");
 			PAUSE();
 		}
 	} while(opc == 'f');
@@ -564,7 +567,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		}
 		else if(difftime(rawtime,datosCli.fechaUltPago) < 0) {
 			datosCli.fechaUltPago = -1;
-			printf("\nFecha no valida");
+			printf("\nERROR: Fecha no valida");
 			PAUSE();
 		}
 	} while(datosCli.fechaUltPago < 0);
@@ -579,14 +582,68 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 	}
 	return tree;
 }
+	
+int EDITAR_CLIENTES(Nodo *tree){
+	if(tree == NULL) {
+		printf("\nNo hay clientes en el arbol");
+		return 2;
+	}
+	char key[12], opc;
+	if(tree == NULL) {
+		printf("\nNo hay clientes en el arbol");
+		return 2;
+	}
+	do {
+		opc = 't';
+		printf("Ingrese el DNI o CUIT/CUIL de un cliente para eliminarlo: ");
+		fflush(stdin);
+		scanf("%s", key);
+		if(strlen(key) != 11 && strlen(key) != 8 && strlen(key) != 7) {
+			printf("\nERROR: Ingreso no valido\n");
+			opc = 'f';
+			PAUSE();
+		}
+		else {
+			for(int i = 0; i < strlen(key); i++) {
+				if(isdigit(key[i]) == 0) {
+					printf("\nERROR: Ingreso no valido\n");
+					opc = 'f';
+					PAUSE();
+					break;
+				}
+			}
+		}
+	} while(opc == 'f');
+	if(strlen(key) == 8 || strlen(key) == 7) {
+		Nodo *aux = BUSCAR_DNI(tree,atoi(key));
+		if(aux == NULL) {
+			printf("\nNo se encontro el cliente\n");
+			PAUSE();
+			return 1;
+		}
+		strcpy(key, aux->cli.cuit);
+	}
+	else {
+		if(BUSCAR(tree,key) == NULL) {
+			printf("\nNo se encontro el cliente\n");
+			PAUSE();
+			return 1;
+		}
+	}
+	tree = REMOVEN(tree,key);
+	return 0;
+}
 
-Nodo *ELIMINADODEMORADORES(Nodo *root) {
+Nodo *ELIMINADODEMORADORES(Nodo *root, char *dia) {
+	char vencimiento[11];
 	double diff = 0;
 	if(root == NULL){
 		return NULL;
 	}
 	time_t rawtime;
 	time (&rawtime);
+	time_ttoa(rawtime,vencimiento,strlen(vencimiento));
+	//sin terminar
 	diff = difftime(rawtime,root->cli.fechaUltPago);
 	printf("%lf", diff);
 	if(diff>2678400){
@@ -594,10 +651,10 @@ Nodo *ELIMINADODEMORADORES(Nodo *root) {
 		
 	}
 	if(root!=NULL){
-	root->left=ELIMINADODEMORADORES(root->left);
+	root->left=ELIMINADODEMORADORES(root->left, dia);
 	}
 	if(root!=NULL){
-	root->right=ELIMINADODEMORADORES(root->right);
+	root->right=ELIMINADODEMORADORES(root->right, dia);
 	}
 	return root;	
 }
@@ -615,4 +672,24 @@ int COMPROBAR_CLIENTESCSV(char *archname) {
 	}
 	fclose(arch);
 	return 0;
+}
+Nodo *ELIMINADO(Nodo *Clientes,int *band){
+if(!ELIMINAR_CLIENTE(Clientes,&(*band))) {
+	if(GUARDAR_CLIENTES(Clientes,CLIENTESCSV) == 0) {
+		printf("Guardado correctamente\n");
+	}
+	else {
+		printf("No se pudo guardar el cambio\n");
+		while(Clientes != NULL) {
+			REMOVEN(Clientes, Clientes->cli.cuit);
+		}
+		Clientes = GEN_ARBOL(CLIENTESCSV);
+		if(Clientes == NULL) {
+			printf("\nSe ha producido un error\a\n");
+			PAUSE();
+			exit(1);
+		}
+	}
+}
+return Clientes;
 }
