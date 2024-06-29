@@ -82,7 +82,7 @@ Nodo *CREAR(cliente cli) {
 }
 
 Nodo *rightRotate(Nodo *y) {
-	// Funcion para rotar a la derecha el subárbol con raiz
+	// Funcion para rotar a la derecha el subÃ¡rbol con raiz
 	Nodo *x = y->left;
 	Nodo *T2 = x->right;
 	// Realizar rotacion
@@ -96,7 +96,7 @@ Nodo *rightRotate(Nodo *y) {
 } 
 
 Nodo *leftRotate(Nodo *x) {
-	// Funcion para rotar a la izquierda el subárbol con raiz x
+	// Funcion para rotar a la izquierda el subÃ¡rbol con raiz x
 	Nodo *y = x->right;
 	Nodo *T2 = y->left;
 	// Realizar rotacion
@@ -349,9 +349,6 @@ Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
 	}
 	return NULL;
 }
-
-
-
 
 int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
 	char key[12], opc;
