@@ -1,0 +1,11 @@
+Compañía ChaqueTuRouter
+CUIT: 20123456789
+Dirección: No jodas 12 of 3
+
+
+
+ ________________________________________
+| Cliente: Alex Acosta                   |
+| Plan: 50 MB                            |
+| Precio: 16500                          |
+|________________________________________|
