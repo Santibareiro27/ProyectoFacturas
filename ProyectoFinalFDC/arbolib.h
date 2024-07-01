@@ -186,6 +186,12 @@ Nodo *GEN_ARBOL(char *archname) {
 			dato[i] = tolower(dato[i]);
 		}
 		cli.nombre = (char*)malloc(strlen(dato)+1);
+		dato[0] = toupper(dato[0]);
+		for(int i = 0; i < strlen(dato)-1; i++) {
+			if(dato[i] == ' ') {
+				dato[i+1] = toupper(dato[i+1]);
+			}
+		}
 		strcpy(cli.nombre,dato);
 		
 		
@@ -466,6 +472,12 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		dato[i] = tolower(dato[i]);
 	}
 	datosCli.nombre = (char*)malloc(strlen(dato)+1);
+	dato[0] = toupper(dato[0]);
+	for(int i = 0; i < strlen(dato)-1; i++) {
+		if(dato[i] == ' ') {
+			dato[i+1] = toupper(dato[i+1]);
+		}
+	}
 	strcpy(datosCli.nombre,dato);
 	CLEAR();
 	do {
@@ -473,26 +485,26 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		printf("\n1) Responsable Inscripto");
 		printf("\n2) Monotributista");
 		printf("\n3) Consumidor Final");
-		printf("\n4) Sujeto Extento");
+		printf("\n4) Sujeto Exento");
 		printf("\nOpcion: ");
 		fflush(stdin);
 		opc = getchar();
 		switch(opc) {
 			
 		case '1':
-			strcpy(dato,"RI");
+			strcpy(dato,"ri");
 			break;
 			
 		case '2':
-			strcpy(dato,"MT");
+			strcpy(dato,"mt");
 			break;
 			
 		case '3':
-			strcpy(dato,"CF");
+			strcpy(dato,"cf");
 			break;
 			
 		case '4':
-			strcpy(dato,"SE");
+			strcpy(dato,"se");
 			break;
 			
 		default:
@@ -633,28 +645,22 @@ int EDITAR_CLIENTES(Nodo *tree){
 	tree = REMOVEN(tree,key);
 	return 0;
 }
-
-Nodo *ELIMINADODEMORADORES(Nodo *root, char *dia) {
-	char vencimiento[11];
-	double diff = 0;
+	
+Nodo *ELIMINAR_MORADORES(Nodo *root, char *mesaux) {
+	char fechapago[11];
 	if(root == NULL){
 		return NULL;
 	}
-	time_t rawtime;
-	time (&rawtime);
-	time_ttoa(rawtime,vencimiento,strlen(vencimiento));
-	//sin terminar
-	diff = difftime(rawtime,root->cli.fechaUltPago);
-	printf("%lf", diff);
-	if(diff>2678400){
-		root=REMOVEN(root,root->cli.cuit);
-		
+	time_ttoa(root->cli.fechaUltPago,fechapago,sizeof(fechapago));
+	if(fechapago[3] != mesaux[0] || fechapago[4] != mesaux[1]){
+		printf("xd");
+		root = REMOVEN(root,root->cli.cuit);
 	}
-	if(root!=NULL){
-	root->left=ELIMINADODEMORADORES(root->left, dia);
+	if(root != NULL) {
+	root->left = ELIMINAR_MORADORES(root->left, mesaux);
 	}
-	if(root!=NULL){
-	root->right=ELIMINADODEMORADORES(root->right, dia);
+	if(root != NULL) {
+	root->right = ELIMINAR_MORADORES(root->right, mesaux);
 	}
 	return root;	
 }
