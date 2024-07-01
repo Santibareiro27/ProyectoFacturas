@@ -130,15 +130,18 @@ int ELIMINAR_PLAN(plan **lista) {
 	//pos: codigo de exito/error
 	int elim;
 	do {
-		printf("\nIngrese los mb del plan que desea eliminar: ");
+		printf("\nIngrese los mb del plan que desea eliminar('0' para cancelar): ");
 		fflush(stdin);
 		if(!scanf("%d", &elim)) {
-			elim = 0;
+			elim = -1;
 		}
-		if(elim <= 0) {
+		if(elim == 0) {
+			return 0;
+		}
+		if(elim <= -1) {
 			printf("\nERROR: Ingreso no valido");
 		}
-	} while(elim <= 0);
+	} while(elim <= -1);
 	plan *ant = NULL, *act = *lista;
 	while(act != NULL) {
 		if(act->mb == elim) {
@@ -171,12 +174,16 @@ int CREAR_PLAN(plan **lista) {
 		return 1;
 	}
 	do {
-		printf("\nIngrese los mb del plan (numero mayor a 0): ");
+		printf("\nIngrese los mb del plan ('0' para cancelar): ");
 		fflush(stdin);
 		if(!scanf("%d", &nn->mb)) {
-			nn->mb = 0;
+			nn->mb = -1;
 		}
-		if(nn->mb <= 0) {
+		if(nn->mb == 0) {
+			free(nn);
+			return 0;
+		}
+		if(nn->mb <= -1) {
 			printf("\nERROR: Ingreso no valido\n");
 		}
 		else {
@@ -184,13 +191,13 @@ int CREAR_PLAN(plan **lista) {
 			while(aux != NULL) {
 				if(nn->mb == aux->mb) {
 					printf("\nERROR: Ya existe un plan con esta cantidad de mb\n");
-					nn->mb = 0;
+					nn->mb = -1;
 					break;
 				}
 				aux = aux->sig;
 			}
 		}
-	} while(nn->mb <= 0);
+	} while(nn->mb <= -1);
 	do {
 		printf("\nIngrese la zona disponible del plan (a,b,c): ");
 		fflush(stdin);
@@ -218,6 +225,7 @@ int GEN_LISTA_PLANES(plan **lista, char *archname) {
 	//func: genera la lista de planes a partir del archivo
 	//pre: lista por referencia y archivo fuente
 	//pos: codigo de exito/error
+	*lista = NULL;
 	plan *nn;
 	char linea[50], *dato;
 	FILE *arch = fopen(archname,"r");

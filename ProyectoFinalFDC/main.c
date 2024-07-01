@@ -9,20 +9,7 @@
 #define CLIENTESCSV "clientes.csv"
 #define CONFIGCSV "config.csv"
 
-/*
-Crear un apartado de gestion de clientes:
-*Dar de baja cliente, lo borra del arbol AVL y del archivo
-*Cambiar plan del cliente, dice el DNI y nombre, y si su zona lo permite cambiar el plan
-*Analisis de cantidad de clientes deudores
-
-Crear un apartado de gestion de planes:
-*Agregar mas datos a la generacion de las facturas
-*Agregar un recargo si en el dato del cliente "FechaUltimoPago" es entre 11 y 20 y si supera los 20 dias, lo da de baja
-*Cambiar porcentajes de recargo
-*/
-
-//nodo Arbol = NULL; //arbol de clientes
-plan *Planes = NULL;
+plan *Planes;
 Nodo *Clientes;
 int Recargo;
 char Dia_Recargo[3];
@@ -30,6 +17,7 @@ char Fecha_Facturacion[11];
 int FacturaN;
 
 void GET_FECHA_FACTURACION() {
+	//funct: obtiene la siguiente fecha de facturacion
 	time_ttoa(time(NULL),Fecha_Facturacion,sizeof(Fecha_Facturacion));
 	if(Fecha_Facturacion[4] == '9') {
 		Fecha_Facturacion[4] = '0';
@@ -75,6 +63,7 @@ int COMPROBAR_CONFIGCSV() {
 }
 
 void CARGAR_CONFIG() {
+	//funct: obtiene las configuraciones de el archivo csv
 	char linea[50], *dato;
 	FILE *arch = fopen(CONFIGCSV,"r");
 	if(!arch) {
@@ -102,6 +91,7 @@ void CARGAR_CONFIG() {
 }
 
 int GUARDAR_CONFIG() {
+	//funct: guarda las configuraciones actuales en el csv
 	FILE *arch = fopen(CONFIGCSV,"w");
 	if(!arch) {
 		printf("\nERROR: No se pudieron guardar los cambios");
@@ -117,6 +107,7 @@ int GUARDAR_CONFIG() {
 }
 
 void MOD_RECARGO() {
+	//funct: modifica el recargo por mora
 	do {
 		printf("\nPorcentaje de recargo por mora actual: %d", Recargo);
 		printf("\nIngrese el nuevo porcentaje de recargo: ");
@@ -133,6 +124,7 @@ void MOD_RECARGO() {
 }
 
 void MOD_FECHA() {
+	//modifica el dia en el que se aplica el recargo por mora
 	int dia;
 	do {
 		printf("\nFecha de recargo por mora actual: dia %s de cada mes", Dia_Recargo);
@@ -156,7 +148,9 @@ void MOD_FECHA() {
 }
 
 void GEN_FACT(Nodo *tree, time_t moratime) {
-	//funct: genera la factura de 1 cliente
+	//funct: genera la factura de 1 cliente en un archivo txt
+	//pre: obtiene el nodo del cliente y la fecha en la
+	//que se aplica el recargo por mora en formato time_t
 	if(tree != NULL) {
 		FacturaN++;
 		char archname[21], N[9];
@@ -172,6 +166,7 @@ void GEN_FACT(Nodo *tree, time_t moratime) {
 			return;
 		}
 		total = aux->precio * 1.21;
+		//crea el nombre del archivo
 		strcpy(archname,"facturaN");
 		sprintf(N,"%d",FacturaN);
 		for(int i = 0; i < (8 - strlen(N)); i++) {
@@ -179,16 +174,15 @@ void GEN_FACT(Nodo *tree, time_t moratime) {
 		}
 		strcat(archname,N);
 		strcat(archname,".txt");
+		//comienza la escritura
 		FILE *arch = fopen(archname,"w");
-		
 		fprintf(arch," ");
 		for(int i = 0; i < 100; i++) {
 			fprintf(arch,"_");
 		}
 		fprintf(arch," \n");
-		
 		fprintf(arch,"|%100c|\n",' ');
-		
+		//datos de emisor y factura
 		fprintf(arch,"| CHAQUE TU ROUTER SRL%69c",' ');
 		fprintf(arch,"FACTURA ");
 		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
@@ -219,7 +213,7 @@ void GEN_FACT(Nodo *tree, time_t moratime) {
 			fprintf(arch,"_");
 		}
 		fprintf(arch,"|\n");
-		//cliente
+		//datos de cliente
 		char completo[200];
 		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
 			strcpy(completo,tree->cli.nombre);
@@ -253,6 +247,7 @@ void GEN_FACT(Nodo *tree, time_t moratime) {
 			fprintf(arch,"_");
 		}
 		fprintf(arch,"|\n");
+		//calculo del total
 		fprintf(arch,"| CANT. |  DESCRIPCION %46c|  VALOR UNIT.  |  VALOR TOTAL  |\n",' ');
 		fprintf(arch,"|_______|____________________________________________________________|_______________|_______________|\n");
 		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
@@ -292,11 +287,14 @@ void GEN_FACT(Nodo *tree, time_t moratime) {
 }
 
 void SETUP_FACTURAS() {
-	//funct: generacion de facturas
+	//funct: crea datos necesarios para las facturas
 	char fechamora[11];
 	time_ttoa(time(NULL),fechamora,sizeof(fechamora));
 	strncpy(fechamora,Dia_Recargo,2);
 	GEN_FACT(Clientes, atotime_t(fechamora));
+	if(GUARDAR_CONFIG()) {
+		CARGAR_CONFIG();
+	}
 }
 
 void MENU_FACTURA() {
@@ -314,6 +312,14 @@ void MENU_FACTURA() {
 		switch(opc) {
 			
 		case '1':
+			do {
+				printf("\nSeguro que desea generar las facturas?(S/N): ");
+				fflush(stdin);
+				opc = toupper(getchar());
+				if(opc != 'S' && opc != 'N') {
+					printf("\nERROR: Ingreso no valido\n");
+				}
+			} while(opc != 'S' && opc != 'N');
 			SETUP_FACTURAS();
 			PAUSE();
 			break;
@@ -492,6 +498,7 @@ void MENU_CLIENTES() {
 		case '3':
 			band = 1;
 			Clientes = ELIMINADO(Clientes,&band);
+			PAUSE();
 			break;
 		case '4':
 			band = 1;
@@ -500,6 +507,7 @@ void MENU_CLIENTES() {
 				printf("\nEdite sus datos: \n ");
 				Clientes = INGRESAR_CLIENTE(Clientes,Planes);
 			}
+			
 			break;
 			
 		case '5':

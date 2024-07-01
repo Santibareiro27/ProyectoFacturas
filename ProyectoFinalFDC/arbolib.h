@@ -606,9 +606,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 			PAUSE();
 		}
 	} while(datosCli.fechaUltPago < 0);
-	
 	tree = INSERTAR_NODO(tree,datosCli);
-	
 	if(GUARDAR_CLIENTES(tree,CLIENTESCSV)==0){
 		printf("Guardado correctamente\n");
 	}else{
