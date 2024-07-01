@@ -234,17 +234,17 @@ void PRINT_INORDER(Nodo *root) {
 	//pos: raiz del arbol
 	if(root != NULL) {
 		PRINT_INORDER(root->left);
-		printf("\n%lu,", root->cli.dni);
-		printf("%s,", root->cli.cuit);
-		printf("%s,", root->cli.apellido);
-		printf("%s,", root->cli.nombre);
-		printf("%s,", root->cli.iva);
-		printf("%s,", root->cli.direccion);
-		printf("%c,", root->cli.zona);
-		printf("%d,", root->cli.mb);
+		printf("\n|%lu", root->cli.dni);
+		printf(" |%s", root->cli.cuit);
+		printf(" |%s", root->cli.apellido);
+		printf(" |%s", root->cli.nombre);
+		printf(" |%s", root->cli.iva);
+		printf(" |%s", root->cli.direccion);
+		printf(" |%c", root->cli.zona);
+		printf(" |%d", root->cli.mb);
 		char fecha[11];
 		time_ttoa(root->cli.fechaUltPago, fecha, sizeof(fecha));
-		printf("%s,", fecha);
+		printf("|%s |\n", fecha);
 		PRINT_INORDER(root->right);
 	}
 }

@@ -466,7 +466,7 @@ void MENU_CLIENTES() {
 				printf("No hay clientes en el arbol\n");
 			}else{
 				printf("Mostrando datos\n");
-				printf("DNI,CUIT,Apellido,Nombre,CondicionIVA,Direccion,Zona,Plan,FechaUltimoPago\n");
+				printf("|DNI |CUIT |Apellido |Nombre |CondicionIVA |Direccion |Zona |Plan |FechaUltimoPago |\n");
 				PRINT_INORDER(Clientes);
 				PAUSE();
 			}
