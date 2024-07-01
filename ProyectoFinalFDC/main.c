@@ -16,9 +16,9 @@ char Dia_Recargo[3];
 char Fecha_Facturacion[11];
 int FacturaN;
 
-void GET_FECHA_FACTURACION() {
+void GET_FECHA_FACTURACION(time_t rntime) {
 	//funct: obtiene la siguiente fecha de facturacion
-	time_ttoa(time(NULL),Fecha_Facturacion,sizeof(Fecha_Facturacion));
+	time_ttoa(rntime,Fecha_Facturacion,sizeof(Fecha_Facturacion));
 	if(Fecha_Facturacion[4] == '9') {
 		Fecha_Facturacion[4] = '0';
 		Fecha_Facturacion[3]++;
@@ -147,151 +147,174 @@ void MOD_FECHA() {
 	}
 }
 
-void GEN_FACT(Nodo *tree, time_t moratime) {
+void GEN_FACT(Nodo *tree, time_t moratime, char *mescliente) {
 	//funct: genera la factura de 1 cliente en un archivo txt
 	//pre: obtiene el nodo del cliente y la fecha en la
 	//que se aplica el recargo por mora en formato time_t
+	char fechacli[11];
 	if(tree != NULL) {
-		FacturaN++;
-		char archname[21], N[9];
-		double total;
-		plan *aux = Planes;
-		while(aux != NULL) {
-			if(aux->mb == tree->cli.mb) {
-				break;
+		time_ttoa(tree->cli.fechaUltPago,fechacli,sizeof(fechacli));
+		if(strncmp(mescliente,(fechacli+3),2) == 0) {
+			FacturaN++;
+			char archname[21], N[9];
+			double total;
+			plan *aux = Planes;
+			while(aux != NULL) {
+				if(aux->mb == tree->cli.mb) {
+					break;
+				}
+				aux = aux->sig;
 			}
-			aux = aux->sig;
-		}
-		if(aux == NULL) {
-			return;
-		}
-		total = aux->precio * 1.21;
-		//crea el nombre del archivo
-		strcpy(archname,"facturaN");
-		sprintf(N,"%d",FacturaN);
-		for(int i = 0; i < (8 - strlen(N)); i++) {
-			strcat(archname,"0");
-		}
-		strcat(archname,N);
-		strcat(archname,".txt");
-		//comienza la escritura
-		FILE *arch = fopen(archname,"w");
-		fprintf(arch," ");
-		for(int i = 0; i < 100; i++) {
-			fprintf(arch,"_");
-		}
-		fprintf(arch," \n");
-		fprintf(arch,"|%100c|\n",' ');
-		//datos de emisor y factura
-		fprintf(arch,"| CHAQUE TU ROUTER SRL%69c",' ');
-		fprintf(arch,"FACTURA ");
-		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
-			fprintf(arch,"A |\n");
-		}
-		else {
-			fprintf(arch,"B |\n");
-		}
-		archname[16] = 0;
-		fprintf(arch,"|%80cComp. Nro: %s |\n",' ', strpbrk(archname,"0"));
-		fprintf(arch,"|%71cFecha de Emision: %s |\n",' ',Fecha_Facturacion);
-		fprintf(arch,"|%100c|\n",' ');
-		fprintf(arch,"|Direccion Comercial: Av. Sarmiento 1060, Obera%34c",' ');
-		fprintf(arch,"CUIT: 30-27122004-9 |\n");
-		fprintf(arch,"|%100c|\n",' ');
-		fprintf(arch,"|Condicion frente al IVA: Responsable Inscripto%20c",' ');
-		fprintf(arch,"Inicio de Actividades: 01/03/2022 |\n");
-		fprintf(arch,"|");
-		for(int i = 0; i < 100; i++) {
-			fprintf(arch,"_");
-		}
-		fprintf(arch,"|\n");
-		strncpy(Fecha_Facturacion,Dia_Recargo,2);
-		fprintf(arch,"|%76cVencimiento: %s |\n",' ',Fecha_Facturacion);
-		strncpy(Fecha_Facturacion,"01",2);
-		fprintf(arch,"|");
-		for(int i = 0; i < 100; i++) {
-			fprintf(arch,"_");
-		}
-		fprintf(arch,"|\n");
-		//datos de cliente
-		char completo[200];
-		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
-			strcpy(completo,tree->cli.nombre);
-		}
-		else {
-			strcpy(completo,tree->cli.apellido);
-			strcat(completo," ");
-			strcat(completo,tree->cli.nombre);
-		}
-		fprintf(arch,"|CUIT/CUIL: %s%78c|\n",tree->cli.cuit,' ');
-		if(strlen(completo) >= 50) {
-			completo[50] = 0;
-		}
-		fprintf(arch,"|Apellido y Nombre/Razon Social: %53s%15c|\n",completo,' ');
-		if(strcmp(tree->cli.iva,"ri") == 0) {
-			strcpy(completo,"Responsable Inscripto");
-		}
-		else if(strcmp(tree->cli.iva,"mt") == 0) {
-			strcpy(completo,"Responsable Monotributo");
-		}
-		else if(strcmp(tree->cli.iva,"cf") == 0) {
-			strcpy(completo,"Consumidor Final");
-		}
-		else {
-			strcpy(completo,"Sujeto Exento");
-		}
-		fprintf(arch,"|Condicion frente al IVA: %60s%15c|\n",completo,' ');
-		fprintf(arch,"|Domicilio: %74s%15c|\n",tree->cli.direccion,' ');
-		fprintf(arch,"|");
-		for(int i = 0; i < 100; i++) {
-			fprintf(arch,"_");
-		}
-		fprintf(arch,"|\n");
-		//calculo del total
-		fprintf(arch,"| CANT. |  DESCRIPCION %46c|  VALOR UNIT.  |  VALOR TOTAL  |\n",' ');
-		fprintf(arch,"|_______|____________________________________________________________|_______________|_______________|\n");
-		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
-			fprintf(arch,"|   1    Servicio de internet %39c   %12.2lf    %12.2lf |\n",' ',aux->precio,aux->precio);
-		}
-		else {
-			fprintf(arch,"|   1    Servicio de internet %39c   %12.2lf    %12.2lf |\n",' ',aux->precio * 1.21,aux->precio* 1.21);
-		}
-		for(int i = 0; i < 10; i++) {
+			if(aux == NULL) {
+				return;
+			}
+			total = aux->precio * 1.21;
+			//crea el nombre del archivo
+			strcpy(archname,"facturaN");
+			sprintf(N,"%d",FacturaN);
+			for(int i = 0; i < (8 - strlen(N)); i++) {
+				strcat(archname,"0");
+			}
+			strcat(archname,N);
+			strcat(archname,".txt");
+			//comienza la escritura
+			FILE *arch = fopen(archname,"w");
+			fprintf(arch," ");
+			for(int i = 0; i < 100; i++) {
+				fprintf(arch,"_");
+			}
+			fprintf(arch," \n");
 			fprintf(arch,"|%100c|\n",' ');
+			//datos de emisor y factura
+			fprintf(arch,"| CHAQUE TU ROUTER SRL%69c",' ');
+			fprintf(arch,"FACTURA ");
+			if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
+				fprintf(arch,"A |\n");
+			}
+			else {
+				fprintf(arch,"B |\n");
+			}
+			archname[16] = 0;
+			fprintf(arch,"|%80cComp. Nro: %s |\n",' ', strpbrk(archname,"0"));
+			fprintf(arch,"|%71cFecha de Emision: %s |\n",' ',Fecha_Facturacion);
+			fprintf(arch,"|%100c|\n",' ');
+			fprintf(arch,"|Direccion Comercial: Av. Sarmiento 1060, Obera%34c",' ');
+			fprintf(arch,"CUIT: 30-27122004-9 |\n");
+			fprintf(arch,"|%100c|\n",' ');
+			fprintf(arch,"|Condicion frente al IVA: Responsable Inscripto%20c",' ');
+			fprintf(arch,"Inicio de Actividades: 01/03/2022 |\n");
+			fprintf(arch,"|");
+			for(int i = 0; i < 100; i++) {
+				fprintf(arch,"_");
+			}
+			fprintf(arch,"|\n");
+			strncpy(Fecha_Facturacion,Dia_Recargo,2);
+			fprintf(arch,"|%76cVencimiento: %s |\n",' ',Fecha_Facturacion);
+			strncpy(Fecha_Facturacion,"01",2);
+			fprintf(arch,"|");
+			for(int i = 0; i < 100; i++) {
+				fprintf(arch,"_");
+			}
+			fprintf(arch,"|\n");
+			//datos de cliente
+			char completo[200];
+			if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
+				strcpy(completo,tree->cli.nombre);
+			}
+			else {
+				strcpy(completo,tree->cli.apellido);
+				strcat(completo," ");
+				strcat(completo,tree->cli.nombre);
+			}
+			fprintf(arch,"|CUIT/CUIL: %s%78c|\n",tree->cli.cuit,' ');
+			if(strlen(completo) >= 50) {
+				completo[50] = 0;
+			}
+			fprintf(arch,"|Apellido y Nombre/Razon Social: %53s%15c|\n",completo,' ');
+			if(strcmp(tree->cli.iva,"ri") == 0) {
+				strcpy(completo,"Responsable Inscripto");
+			}
+			else if(strcmp(tree->cli.iva,"mt") == 0) {
+				strcpy(completo,"Responsable Monotributo");
+			}
+			else if(strcmp(tree->cli.iva,"cf") == 0) {
+				strcpy(completo,"Consumidor Final");
+			}
+			else {
+				strcpy(completo,"Sujeto Exento");
+			}
+			fprintf(arch,"|Condicion frente al IVA: %60s%15c|\n",completo,' ');
+			fprintf(arch,"|Domicilio: %74s%15c|\n",tree->cli.direccion,' ');
+			fprintf(arch,"|");
+			for(int i = 0; i < 100; i++) {
+				fprintf(arch,"_");
+			}
+			fprintf(arch,"|\n");
+			//calculo del total
+			fprintf(arch,"| CANT. |  DESCRIPCION %46c|  VALOR UNIT.  |  VALOR TOTAL  |\n",' ');
+			fprintf(arch,"|_______|____________________________________________________________|_______________|_______________|\n");
+			if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
+				fprintf(arch,"|   1    Servicio de internet %39c   %12.2lf    %12.2lf |\n",' ',aux->precio,aux->precio);
+			}
+			else {
+				fprintf(arch,"|   1    Servicio de internet %39c   %12.2lf    %12.2lf |\n",' ',aux->precio * 1.21,aux->precio* 1.21);
+			}
+			for(int i = 0; i < 10; i++) {
+				fprintf(arch,"|%100c|\n",' ');
+			}
+			fprintf(arch,"|");
+			for(int i = 0; i < 100; i++) {
+				fprintf(arch,"_");
+			}
+			fprintf(arch,"|\n");
+			if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
+				fprintf(arch,"|%67c|             IVA: $%13.2lf|\n",' ',aux->precio * 0.21);
+			}
+			else {
+				fprintf(arch,"|                                                                   |                                |\n");
+			}
+			//mora
+			if(moratime < tree->cli.fechaUltPago) {
+				fprintf(arch,"|%67c|Recargo por mora: $%13.2lf|\n",' ',total * (Recargo)/100);
+				total += total*((double)Recargo/100);
+			}
+			else {
+				fprintf(arch,"|                                                                   |                                |\n");
+			}
+			fprintf(arch,"|%67c|           Total: $%13.2lf|\n",' ',total);
+			fprintf(arch,"|___________________________________________________________________|________________________________|\n");
+			fclose(arch);
 		}
-		fprintf(arch,"|");
-		for(int i = 0; i < 100; i++) {
-			fprintf(arch,"_");
-		}
-		fprintf(arch,"|\n");
-		if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
-			fprintf(arch,"|%67c|             IVA: $%13.2lf|\n",' ',aux->precio * 0.21);
-		}
-		else {
-			fprintf(arch,"|                                                                   |                                |\n");
-		}
-		//mora
-		if(moratime < tree->cli.fechaUltPago) {
-			fprintf(arch,"|%67c|Recargo por mora: $%13.2lf|\n",' ',total * (Recargo)/100);
-			total += total*((double)Recargo/100);
-		}
-		else {
-			fprintf(arch,"|                                                                   |                                |\n");
-		}
-		fprintf(arch,"|%67c|           Total: $%13.2lf|\n",' ',total);
-		fprintf(arch,"|___________________________________________________________________|________________________________|\n");
-		fclose(arch);
-		GEN_FACT(tree->left, moratime);
-		GEN_FACT(tree->right, moratime);
+		GEN_FACT(tree->left, moratime, mescliente);
+		GEN_FACT(tree->right, moratime, mescliente);
 	}
 }
 
 void SETUP_FACTURAS() {
 	//funct: crea datos necesarios para las facturas
-	char fechamora[11];
-	time_ttoa(time(NULL),fechamora,sizeof(fechamora));
-	strncpy(fechamora,Dia_Recargo,2);
-	GEN_FACT(Clientes, atotime_t(fechamora));
+	char fechaux[11], mesaux[] = "00";
+	time_t taux;
+	do {
+		time_ttoa(time(NULL),fechaux,sizeof(fechaux));
+		printf("\n(Fecha actual: %s)", fechaux);
+		printf("\nIngrese la fecha a tomar en cuenta, se generaran las facturas ");
+		printf("para el primero del mes siguiente en funcion de esta (dd/mm/yyyy): ");
+		fflush(stdin);
+		gets(fechaux);
+		taux = atotime_t(fechaux);
+		if(taux == -1) {
+			PAUSE();
+		}
+		else if(difftime(time(NULL),taux) < 0) {
+			taux = -1;
+			printf("\nERROR: Fecha no valida");
+			PAUSE();
+		}
+	} while(taux < 0);
+	GET_FECHA_FACTURACION(taux);
+	strncpy(mesaux,(fechaux + 3),2);
+	strncpy(fechaux,Dia_Recargo,2);
+	GEN_FACT(Clientes, atotime_t(fechaux), mesaux);
 	if(GUARDAR_CONFIG()) {
 		CARGAR_CONFIG();
 	}
@@ -445,8 +468,8 @@ void MENU_PLANES() {
 }
 
 void MENU_CLIENTES() {
-	char opc, mesaux[3], fechaux[11];
-	int band = 1;
+	char opc, mesaux[] = "00", fechaux[11];
+	int band = 1, mesnum;
 	for(;;){
 		printf("\nAdministracion de clientes");
 		printf("\n1 - Mostrar clientes");
@@ -500,21 +523,36 @@ void MENU_CLIENTES() {
 			Clientes = ELIMINADO(Clientes,&band);
 			PAUSE();
 			break;
-		case '4':
-			band = 1;
-			Clientes = ELIMINADO(Clientes,&band);
-			if(band){
-				printf("\nEdite sus datos: \n ");
-				Clientes = INGRESAR_CLIENTE(Clientes,Planes);
-			}
 			
+		case '4':
+			if (EDITAR_CLIENTE(Clientes, Planes) == 2) {
+				while(Clientes != NULL) {
+					REMOVEN(Clientes, Clientes->cli.cuit);
+				}
+				Clientes = GEN_ARBOL(CLIENTESCSV);
+				if(Clientes == NULL) {
+					printf("\nSe ha producido un error\a\n");
+					PAUSE();
+					exit(1);
+				}
+			}
+			PAUSE();
 			break;
 			
 		case '5':
 			time_ttoa(time(NULL),fechaux,sizeof(fechaux));
-			mesaux[0] = fechaux[3];
-			mesaux[1] = fechaux[4];
-			printf("Procediendo a eliminar clientes moradores de mas de 31 dias\n");
+			do {
+				printf("\n(Fecha actual: %s)", fechaux);
+				printf("\nIngrese el mes a tomar en cuenta, se eliminaran ");
+				printf("aquellos que no pagaron en este: ");
+				fflush(stdin);
+				gets(mesaux);
+				mesnum = atoi(mesaux);
+				if(mesnum < 1 || mesnum > 12) {
+					printf("\nERROR: Ingreso no valido\n");
+				}
+			} while(mesnum < 1 || mesnum > 12);
+			printf("Procediendo a eliminar clientes moradores de mas de un mes\n");
 			Clientes = ELIMINAR_MORADORES(Clientes,mesaux);
 			if(GUARDAR_CLIENTES(Clientes,CLIENTESCSV) == 0) {
 				printf("Guardado correctamente\n");
@@ -586,7 +624,6 @@ int main() {
 		exit(10);
 		break;
 	}
-	GET_FECHA_FACTURACION();
 	for(;;){
 		printf("\nMenu");
 		printf("\n1 - Administrar planes");

@@ -234,7 +234,8 @@ void PRINT_INORDER(Nodo *root) {
 	//pos: raiz del arbol
 	if(root != NULL) {
 		PRINT_INORDER(root->left);
-		printf("\n|%lu", root->cli.dni);
+		printf("\n");
+		printf(" |%lu", root->cli.dni);
 		printf(" |%s", root->cli.cuit);
 		printf(" |%s", root->cli.apellido);
 		printf(" |%s", root->cli.nombre);
@@ -244,7 +245,8 @@ void PRINT_INORDER(Nodo *root) {
 		printf(" |%d", root->cli.mb);
 		char fecha[11];
 		time_ttoa(root->cli.fechaUltPago, fecha, sizeof(fecha));
-		printf("|%s |\n", fecha);
+		printf("|%s | ", fecha);
+		printf("\n");
 		PRINT_INORDER(root->right);
 	}
 }
@@ -268,7 +270,7 @@ void FREECLI(Nodo *aux) {
 }
 
 Nodo *REMOVEN(Nodo *aux, char *key) {
-	//func: elimina del arbol un hijo según la key siendo el CUIT/CUIL
+	//func: elimina del arbol un hijo segun la key siendo el CUIT/CUIL
 	//pos: raiz del arbol y la key
 	//pre:raiz del arbol
 	if(aux == NULL) {
@@ -371,6 +373,310 @@ Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
 		return BUSCAR_DNI(aux->right, dni);
 	}
 	return NULL;
+}
+
+int EDITAR_CLIENTE(Nodo *tree, plan *planes){
+	//func: edicion de un cliente del arbol
+	//pre: raiz del arbol, la lista de planes
+	//pos: codigo de exito/error
+	char dato[100], opc;
+	Nodo *nodocli;
+	if(tree == NULL) {
+		printf("\nNo hay clientes en el arbol");
+		return 1;
+	}
+	do {
+		opc = 't';
+		printf("Ingrese el DNI o CUIT/CUIL de un cliente para editarlo: ");
+		fflush(stdin);
+		scanf("%s", dato);
+		if(strlen(dato) != 11 && strlen(dato) != 8 && strlen(dato) != 7) {
+			printf("\nERROR: Ingreso no valido\n");
+			opc = 'f';
+			PAUSE();
+		}
+		else {
+			for(int i = 0; i < strlen(dato); i++) {
+				if(isdigit(dato[i]) == 0) {
+					printf("\nERROR: Ingreso no valido\n");
+					opc = 'f';
+					PAUSE();
+					break;
+				}
+			}
+		}
+	} while(opc == 'f');
+	if(strlen(dato) == 8 || strlen(dato) == 7) {
+		nodocli = BUSCAR_DNI(tree,atoi(dato));
+	}
+	else {
+		nodocli = BUSCAR(tree,dato);
+	}
+	if(nodocli == NULL) {
+		printf("\nNo se encontro el cliente\n");
+		return 1;
+	}
+	//muestra
+	printf("\nSe encontro el cliente:\n");
+	do {
+		printf("\nCUIT/CUIL: %s",nodocli->cli.cuit);
+		if(*(nodocli->cli.cuit) == '2') {
+			printf("\nDNI: %ld",nodocli->cli.dni);
+			printf("\nApellido: %s",nodocli->cli.apellido);
+		}
+		printf("\nNombre: %s",nodocli->cli.nombre);
+		printf("\nCondicion IVA: ");
+		switch(*(nodocli->cli.iva)) {
+		case 'r':
+			printf("Responsable Inscripto");
+			break;
+		case 'm':
+			printf("Responsable Monotributo");
+			break;
+		case 'c':
+			printf("Consumidor Final");
+			break;
+		case 's':
+			printf("Sujeto Exento");
+			break;
+		}
+		printf("\nDireccion: %s",nodocli->cli.direccion);
+		printf("\nZona: %c",nodocli->cli.zona);
+		printf("\nPlan: %d",nodocli->cli.mb);
+		time_ttoa(nodocli->cli.fechaUltPago,dato,sizeof(dato));
+		printf("\nFecha de ultimo pago: %s\n",dato);
+		printf("\nDesea editarlo?(S/N): ");
+		fflush(stdin);
+		opc = toupper(getchar());
+		CLEAR();
+		if(opc != 'S' && opc != 'N') {
+			printf("\nERROR: Ingreso no valido\n");
+		}
+	} while(opc != 'S' && opc != 'N');
+	if(opc == 'N') {
+		printf("\nSe cancelo la accion\n");
+		return 1;
+	}
+	else {
+		CLEAR();
+	}
+	//editar de CUIT/CUIL
+	do {
+		opc = 't';
+		printf("\nCUIT/CUIL anterior: %s", nodocli->cli.cuit);
+		printf("\nCUIT/CUIL nuevo: ");
+		fflush(stdin);
+		scanf("%s", dato);
+		if(strlen(dato) != 11) {
+			printf("\nERROR: Ingreso no valido\n");
+			opc = 'f';
+			PAUSE();
+		}
+		else {
+			for(int i = 0; i < 11; i++) {
+				if(isdigit(dato[i]) == 0) {
+					printf("\nERROR: Ingreso no valido\n");
+					opc = 'f';
+					PAUSE();
+					break;
+				}
+			}
+		}
+		if(strcmp(dato,nodocli->cli.cuit) == 0) {
+			opc = 's';
+		}
+		else if(BUSCAR(tree,dato) != NULL) {
+			opc = 'f';
+			printf("\nEste CUIT/CUIL ya ha sido registrado\n");
+			PAUSE();
+		}
+	} while(opc == 'f');
+	if(opc != 's') {
+		strcpy(nodocli->cli.cuit,dato);
+	}
+	CLEAR();
+	//editar de DNI
+	if(*(nodocli->cli.cuit) == '2') {
+		strcpy(dato,(nodocli->cli.cuit + 2));
+		dato[8] = 0;
+		nodocli->cli.dni = atoi(dato);
+		CLEAR();
+	}
+	else {
+		nodocli->cli.dni = 0;
+	}
+	//editar Apellido
+	if(*(nodocli->cli.cuit) == '2') {
+		printf("\nApellido anterior: %s", nodocli->cli.apellido);
+		printf("\nApellido nuevo: ");
+		fflush(stdin);
+		gets(dato);
+		for(int i=0;i<strlen(dato);i++){
+			dato[i] = toupper(dato[i]);
+		}
+		CLEAR();
+	}
+	else {
+		strcpy(dato,"0");
+	}
+	if(strcmp(dato,nodocli->cli.apellido) != 0) {
+		free(nodocli->cli.apellido);
+		nodocli->cli.apellido = (char*)malloc(strlen(dato)+1);
+		strcpy(nodocli->cli.apellido,dato);
+	}
+	//editar Nombre
+	printf("\nNombre anterior: %s", nodocli->cli.nombre);
+	printf("\nNombre nuevo: ");
+	fflush(stdin);
+	gets(dato);
+	for(int i=0;i<strlen(dato);i++){
+		dato[i] = tolower(dato[i]);
+	}
+	dato[0] = toupper(dato[0]);
+	for(int i = 0; i < strlen(dato)-1; i++) {
+		if(dato[i] == ' ') {
+			dato[i+1] = toupper(dato[i+1]);
+		}
+	}
+	if(strcmp(dato, nodocli->cli.nombre) != 0) {
+		free(nodocli->cli.nombre);
+		nodocli->cli.nombre = (char*)malloc(strlen(dato)+1);
+		strcpy(nodocli->cli.nombre,dato);
+	}
+	CLEAR();
+	//editar IVA
+	do {
+		printf("\nCondicion frente al IVA anterior: ");
+		switch(*(nodocli->cli.iva)) {
+		case 'r':
+			printf("Responsable Inscripto");
+			break;
+		case 'm':
+			printf("Responsable Monotributo");
+			break;
+		case 'c':
+			printf("Consumidor Final");
+			break;
+		case 's':
+			printf("Sujeto Exento");
+			break;
+		}
+		printf("\nCondicion frente al IVA nueva");
+		printf("\n1) Responsable Inscripto");
+		printf("\n2) Monotributista");
+		printf("\n3) Consumidor Final");
+		printf("\n4) Sujeto Exento");
+		printf("\nOpcion: ");
+		fflush(stdin);
+		opc = getchar();
+		switch(opc) {
+			
+		case '1':
+			strcpy(dato,"ri");
+			break;
+			
+		case '2':
+			strcpy(dato,"mt");
+			break;
+			
+		case '3':
+			strcpy(dato,"cf");
+			break;
+			
+		case '4':
+			strcpy(dato,"se");
+			break;
+			
+		default:
+			printf("\nERROR: Ingreso no valido\n");
+			PAUSE();
+			break;
+		}
+	} while(opc < '1' || opc > '4');
+	strcpy(nodocli->cli.iva,dato);
+	CLEAR();
+	//editar direccion
+	printf("\nDireccion antigua: %s", nodocli->cli.direccion);
+	printf("\nDireccion nueva: ");
+	fflush(stdin);
+	gets(dato);
+	if(strcmp(dato,nodocli->cli.direccion) != 0) {
+		free(nodocli->cli.direccion);
+		nodocli->cli.direccion = (char*)malloc(strlen(dato)+1);
+		strcpy(nodocli->cli.direccion,dato);
+	}
+	CLEAR();
+	//editar zona
+	do {
+		printf("\nZona antigua: %c", nodocli->cli.zona);
+		printf("\nZona nueva(a/b/c): ");
+		fflush(stdin);
+		nodocli->cli.zona = tolower(getchar());
+		if(nodocli->cli.zona < 'a' || nodocli->cli.zona > 'c') {
+			printf("\nERROR: Ingreso no valido\n");
+		}
+	} while(nodocli->cli.zona < 'a' || nodocli->cli.zona > 'c');
+	nodocli->cli.zona = tolower(nodocli->cli.zona);
+	CLEAR();
+	plan *aux;
+	opc = 'f';
+	do {
+		MOSTRAR_PLANES(planes);
+		printf("\nPlan antiguo: %d", nodocli->cli.mb);
+		printf("\nPlan nuevo (en MB): ");
+		fflush(stdin);
+		if(scanf("%d",&nodocli->cli.mb) == 0) {
+			nodocli->cli.mb = 0;
+		}
+		if(nodocli->cli.mb > 0) {
+			aux = planes;
+			opc = 'f';
+			while(aux != NULL && opc != 't') {
+				if(aux->mb == nodocli->cli.mb) {
+					opc = 't';
+					break;
+				}
+				aux = aux->sig;
+			}
+			if(opc == 'f') {
+				printf("\nNo se encontro el plan\n");
+				PAUSE();
+			}
+			else if(nodocli->cli.zona > aux->zona) {
+				opc = 'f';
+				printf("\nEl plan seleccionado(%c) no es compatible con esta zona(%c)\n",nodocli->cli.zona,aux->zona);
+				PAUSE();
+			}
+		}
+		else {
+			printf("\nERROR: Ingreso no valido\n");
+			PAUSE();
+		}
+	} while(opc == 'f');
+	CLEAR();
+	char fechaux[11];
+	time_ttoa(nodocli->cli.fechaUltPago,fechaux,sizeof(fechaux));
+	do {
+		printf("\nFecha anterior del ultimo pago: %s",fechaux);
+		printf("\nFecha del ultimo pago (dd/mm/yyyy): ");
+		fflush(stdin);
+		gets(dato);
+		nodocli->cli.fechaUltPago = atotime_t(dato);
+		if(nodocli->cli.fechaUltPago == -1) {
+			PAUSE();
+		}
+		else if(difftime(time(NULL),nodocli->cli.fechaUltPago) < 0) {
+			nodocli->cli.fechaUltPago = -1;
+			printf("\nERROR: Fecha no valida");
+			PAUSE();
+		}
+	} while(nodocli->cli.fechaUltPago < 0);
+	if(GUARDAR_CLIENTES(tree,CLIENTESCSV) != 0){
+		printf("No se pudo guardar el cambio\n");
+		return 2;
+	}
+	printf("Guardado correctamente\n");
+	return 0;
 }
 
 int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
@@ -590,8 +896,6 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		}
 	} while(opc == 'f');
 	CLEAR();
-	time_t rawtime;
-	time(&rawtime);
 	do {
 		printf("\nFecha del ultimo pago (dd/mm/yyyy): ");
 		fflush(stdin);
@@ -600,7 +904,7 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 		if(datosCli.fechaUltPago == -1) {
 			PAUSE();
 		}
-		else if(difftime(rawtime,datosCli.fechaUltPago) < 0) {
+		else if(difftime(time(NULL),datosCli.fechaUltPago) < 0) {
 			datosCli.fechaUltPago = -1;
 			printf("\nERROR: Fecha no valida");
 			PAUSE();
@@ -615,18 +919,23 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 	}
 	return tree;
 }
+	
 Nodo *ELIMINAR_MORADORES(Nodo *root, char *mesaux) {
 	//func: elimina aquellos clientes que son moradores
 	//pre: raiz del arbol, y un arreglo de caracteres del dia
 	//pos: raiz del arbol
 	char fechapago[11];
-	if(root == NULL){
-		return NULL;
-	}
-	time_ttoa(root->cli.fechaUltPago,fechapago,sizeof(fechapago));
-	if(fechapago[3] != mesaux[0] || fechapago[4] != mesaux[1]){
-		root = REMOVEN(root,root->cli.cuit);
-	}
+	int band = 0;
+	do {
+		if(root == NULL){
+			return NULL;
+		}
+		time_ttoa(root->cli.fechaUltPago,fechapago,sizeof(fechapago));
+		if(fechapago[3] != mesaux[0] || fechapago[4] != mesaux[1]){
+			root = REMOVEN(root,root->cli.cuit);
+			band = 1;
+		}
+	} while(band);
 	if(root != NULL) {
 	root->left = ELIMINAR_MORADORES(root->left, mesaux);
 	}
