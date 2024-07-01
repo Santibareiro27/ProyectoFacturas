@@ -110,6 +110,7 @@ Nodo *leftRotate(Nodo *x) {
 } 
 
 int GET_BALANCE(Nodo *N){
+	//func: balancea el arbol
 	if(N == NULL) {
 		return 0;
 	}
@@ -118,6 +119,8 @@ int GET_BALANCE(Nodo *N){
 	
 Nodo *INSERTAR_NODO(Nodo *tree, cliente cli) {
 	//func: insercion nodo
+	//pre: arbol de clientes, datos de un cliente
+	//pos: nodo del arbol
 	if(tree == NULL) {
 		return CREAR(cli);
 	}
@@ -155,7 +158,9 @@ Nodo *INSERTAR_NODO(Nodo *tree, cliente cli) {
 }
 
 Nodo *GEN_ARBOL(char *archname) {
-	//func: genera arbol de clientes
+	//func: genera árbol de clientes a partir del archivo .csv si este existe		
+	//pos: nombre del archivo
+	//pre: nodo del arbol
 	Nodo *tree = NULL;
 	cliente cli;
 	FILE *arch;
@@ -225,6 +230,8 @@ Nodo *GEN_ARBOL(char *archname) {
 
 
 void PRINT_INORDER(Nodo *root) {
+	//func: muestra "en orden" todo el arbol
+	//pos: raiz del arbol
 	if(root != NULL) {
 		PRINT_INORDER(root->left);
 		printf("\n%lu,", root->cli.dni);
@@ -243,6 +250,7 @@ void PRINT_INORDER(Nodo *root) {
 }
 
 char *GETMIN(Nodo *aux) {
+	//func consigue el mínimo id de uno de los nodos del arbol 	
 	while(aux->left != NULL) {
 		aux = aux->left;
 	}
@@ -250,6 +258,8 @@ char *GETMIN(Nodo *aux) {
 }
 
 void FREECLI(Nodo *aux) {
+	//func: libera un cliente
+	//pos: nodo del arbol
 	free(aux->cli.apellido);
 	free(aux->cli.nombre);
 	free(aux->cli.iva);
@@ -258,6 +268,9 @@ void FREECLI(Nodo *aux) {
 }
 
 Nodo *REMOVEN(Nodo *aux, char *key) {
+	//func: elimina del arbol un hijo según la key siendo el CUIT/CUIL
+	//pos: raiz del arbol y la key
+	//pre:raiz del arbol
 	if(aux == NULL) {
 		return NULL;
 	}
@@ -323,7 +336,9 @@ int GUARDAR_CLIENTES(Nodo *root, char *archname) {
 }
 
 Nodo *BUSCAR(Nodo *aux, char *cui) {
-	//fun: Busca un cliente usando como dato de busqueda su CUIL/CUIT
+	//func: Busca un cliente usando como dato de busqueda su CUIL/CUIT
+	//pre: raiz del arbol y el CUIL/CUIT
+	//pos: raiz del arbol
 	if(aux == NULL) {
 		return NULL;
 	}
@@ -340,7 +355,9 @@ Nodo *BUSCAR(Nodo *aux, char *cui) {
 }
 
 Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
-	//fun: Busca un cliente usando como dato de busqueda su DNI
+	//func: Busca un cliente usando como dato de busqueda su DNI
+	//pre: raiz del arbol y el dni
+	//pos: raiz del arbol
 	if(aux == NULL) {
 		return NULL;
 	}
@@ -357,6 +374,9 @@ Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
 }
 
 int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
+	//func: Eliminación de un cliente existente
+	//pre: raiz del arbol y bandera por referencia
+	//pos: codigo de exito/error
 	char key[12], opc;
 	if(tree == NULL) {
 		printf("\nNo hay clientes en el arbol");
@@ -407,6 +427,9 @@ int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
 }
 
 Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
+	//func: Ingreso de un cliente al arbol
+	//pre: raiz del arbol, la lista de planes
+	//pos: raiz del arbol con hijo agregado
 	printf("\nIngrese los datos del cliente\n");
 	char dato[100], opc;
 	cliente datosCli;
@@ -594,59 +617,10 @@ Nodo *INGRESAR_CLIENTE(Nodo *tree, plan *planes){
 	}
 	return tree;
 }
-	
-int EDITAR_CLIENTES(Nodo *tree){
-	if(tree == NULL) {
-		printf("\nNo hay clientes en el arbol");
-		return 2;
-	}
-	char key[12], opc;
-	if(tree == NULL) {
-		printf("\nNo hay clientes en el arbol");
-		return 2;
-	}
-	do {
-		opc = 't';
-		printf("Ingrese el DNI o CUIT/CUIL de un cliente para eliminarlo: ");
-		fflush(stdin);
-		scanf("%s", key);
-		if(strlen(key) != 11 && strlen(key) != 8 && strlen(key) != 7) {
-			printf("\nERROR: Ingreso no valido\n");
-			opc = 'f';
-			PAUSE();
-		}
-		else {
-			for(int i = 0; i < strlen(key); i++) {
-				if(isdigit(key[i]) == 0) {
-					printf("\nERROR: Ingreso no valido\n");
-					opc = 'f';
-					PAUSE();
-					break;
-				}
-			}
-		}
-	} while(opc == 'f');
-	if(strlen(key) == 8 || strlen(key) == 7) {
-		Nodo *aux = BUSCAR_DNI(tree,atoi(key));
-		if(aux == NULL) {
-			printf("\nNo se encontro el cliente\n");
-			PAUSE();
-			return 1;
-		}
-		strcpy(key, aux->cli.cuit);
-	}
-	else {
-		if(BUSCAR(tree,key) == NULL) {
-			printf("\nNo se encontro el cliente\n");
-			PAUSE();
-			return 1;
-		}
-	}
-	tree = REMOVEN(tree,key);
-	return 0;
-}
-	
 Nodo *ELIMINAR_MORADORES(Nodo *root, char *mesaux) {
+	//func: elimina aquellos clientes que son moradores
+	//pre: raiz del arbol, y un arreglo de caracteres del dia
+	//pos: raiz del arbol
 	char fechapago[11];
 	if(root == NULL){
 		return NULL;
@@ -665,6 +639,9 @@ Nodo *ELIMINAR_MORADORES(Nodo *root, char *mesaux) {
 }
 
 int COMPROBAR_CLIENTESCSV(char *archname) {
+	//func: comprueba la existencia del archivo .csv de clientes
+	//pre: nombre del archivo
+	//pos: codigo de exito/error
 	FILE *arch;
 	arch = fopen(archname,"r");
 	if(!arch) {
@@ -679,6 +656,9 @@ int COMPROBAR_CLIENTESCSV(char *archname) {
 	return 0;
 }
 Nodo *ELIMINADO(Nodo *Clientes,int *band){
+	//func: intermediario para la eliminación de un cliente existente y revisa que se elimine correctamente
+	//pre: raiz del arbol y bandera por referencia
+	//pos: raiz del arbol con hijo eliminado
 if(!ELIMINAR_CLIENTE(Clientes,&(*band))) {
 	if(GUARDAR_CLIENTES(Clientes,CLIENTESCSV) == 0) {
 		printf("Guardado correctamente\n");
