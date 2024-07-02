@@ -298,7 +298,7 @@ void SETUP_FACTURAS() {
 		time_ttoa(time(NULL),fechaux,sizeof(fechaux));
 		printf("\n(Fecha actual: %s)", fechaux);
 		printf("\nIngrese la fecha a tomar en cuenta, se generaran las facturas ");
-		printf("para el primero del mes siguiente en funcion de esta (dd/mm/yyyy): ");
+		printf("\npara el primero del mes siguiente en funcion de esta (dd/mm/yyyy): ");
 		fflush(stdin);
 		gets(fechaux);
 		taux = atotime_t(fechaux);
