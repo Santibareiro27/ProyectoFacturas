@@ -6,9 +6,6 @@
 #include <ctype.h>
 #include "planeslib.h"
 #define CLIENTESCSV "clientes.csv"
-//Eliminar a los usuarios por medio de eleccion de dni
-//Hacer una funcion de busqueda en el arbol que revise la fecha de los clientes 
-// y si la dif con respecto al de la maquina es mayor o igual a 31 dias entonces lo elimina
 
 //Define estructura de cli
 typedef struct cliente {
@@ -62,7 +59,7 @@ int GET_HEIGHT(Nodo *N) {
 	return N->height;
 } 
 
-int MAX(int a, int b) {
+int GET_MAX(int a, int b) {
 	//Funcion para conseguir el maximo entre dos enteros
 	return (a > b)? a : b;
 } 
@@ -89,8 +86,8 @@ Nodo *rightRotate(Nodo *y) {
 	x->right = y;
 	y->left = T2;
 	// Actualizar alturas
-	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right)) + 1;
-	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right)) + 1;
+	y->height = GET_MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right)) + 1;
+	x->height = GET_MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right)) + 1;
 	// Devuelve nueva raiz
 	return x;
 } 
@@ -103,8 +100,8 @@ Nodo *leftRotate(Nodo *x) {
 	y->left = x;
 	x->right = T2;
 	// Actualizar alturas
-	x->height = MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
-	y->height = MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
+	x->height = GET_MAX(GET_HEIGHT(x->left), GET_HEIGHT(x->right))+1;
+	y->height = GET_MAX(GET_HEIGHT(y->left), GET_HEIGHT(y->right))+1;
 	// Devuelve nueva raiz
 	return y;
 } 
@@ -133,7 +130,7 @@ Nodo *INSERTAR_NODO(Nodo *tree, cliente cli) {
 	else {
 		return tree;
 	}
-	tree->height = 1 + MAX(GET_HEIGHT(tree->left),GET_HEIGHT(tree->right));
+	tree->height = 1 + GET_MAX(GET_HEIGHT(tree->left),GET_HEIGHT(tree->right));
 	
 	int balance = GET_BALANCE(tree);
 	// Left Left Caso
@@ -251,61 +248,90 @@ void PRINT_INORDER(Nodo *root) {
 	}
 }
 
-char *GETMIN(Nodo *aux) {
+Nodo *GET_MIN(Nodo *aux) {
 	//func consigue el mínimo id de uno de los nodos del arbol 	
-	while(aux->left != NULL) {
-		aux = aux->left;
+	Nodo *act = aux;
+	while(act->left != NULL) {
+		act = act->left;
 	}
-	return aux->cli.cuit;
+	return act;
 }
 
 void FREECLI(Nodo *aux) {
 	//func: libera un cliente
 	//pos: nodo del arbol
+	free(aux->cli.cuit);
 	free(aux->cli.apellido);
 	free(aux->cli.nombre);
 	free(aux->cli.iva);
 	free(aux->cli.direccion);
-	free(aux->cli.cuit);
 }
 
-Nodo *REMOVEN(Nodo *aux, char *key) {
+Nodo *REMOVEN(Nodo *aux, char *cuit) {
 	//func: elimina del arbol un hijo segun la key siendo el CUIT/CUIL
 	//pos: raiz del arbol y la key
 	//pre:raiz del arbol
 	if(aux == NULL) {
-		return NULL;
+		return aux;
 	}
-	if(strcmp(key,aux->cli.cuit) < 0) {
-		aux->left = REMOVEN(aux->left, key);
+	if(strcmp(cuit,aux->cli.cuit) < 0) {
+		aux->left = REMOVEN(aux->left, cuit);
 	}
-	else if(strcmp(key,aux->cli.cuit) > 0) {
-		aux->right = REMOVEN(aux->right, key);
+	else if(strcmp(cuit,aux->cli.cuit) > 0) {
+		aux->right = REMOVEN(aux->right, cuit);
 	}
 	else {
-		if(aux->left == NULL && aux->right == NULL) {
-			FREECLI(aux);
-			free(aux);
-			return NULL;
-		}
-		else if(aux->left == NULL) {
-			Nodo *temp = aux->right;
-			FREECLI(aux);
-			free(aux);
-			return temp;
-		}
-		else if(aux->right == NULL) {
-			Nodo *temp = aux->left;
-			FREECLI(aux);
-			free(aux);
-			return temp;
+		if((aux->left == NULL) || (aux->right == NULL)) {
+			Nodo *temp = aux->left ? aux->left : aux->right;
+			
+			if (temp == NULL) {
+				temp = aux;
+				aux = NULL;
+			}
+			else {
+				*aux = *temp;
+			}
+			free(temp);
 		}
 		else {
-			char rmin[12];
-			strcpy(rmin,GETMIN(aux->right));
-			aux->cli.cuit = rmin;
-			aux->right = REMOVEN(aux->right, rmin);
+			Nodo* temp = GET_MIN(aux->right);
+			FREECLI(aux);
+			aux->cli.cuit = malloc(strlen(temp->cli.cuit) + 1);
+			strcpy(aux->cli.cuit, temp->cli.cuit);
+			aux->cli.apellido = malloc(strlen(temp->cli.apellido) + 1);
+			strcpy(aux->cli.apellido, temp->cli.apellido);
+			aux->cli.nombre = malloc(strlen(temp->cli.nombre) + 1);
+			strcpy(aux->cli.nombre, temp->cli.nombre);
+			aux->cli.iva = malloc(strlen(temp->cli.iva) + 1);
+			strcpy(aux->cli.iva, temp->cli.iva);
+			aux->cli.direccion = malloc(strlen(temp->cli.direccion) + 1);
+			strcpy(aux->cli.direccion, temp->cli.direccion);
+			aux->cli.dni = temp->cli.dni;
+			aux->cli.zona = temp->cli.zona;
+			aux->cli.mb = temp->cli.mb;
+			aux->cli.fechaUltPago = temp->cli.fechaUltPago;
+			
+			aux->right = REMOVEN(aux->right, temp->cli.cuit);
 		}
+	}
+	if (aux == NULL) {
+		return aux;
+	}
+	aux->height = 1 + GET_MAX(GET_HEIGHT(aux->left), GET_HEIGHT(aux->right));
+	int balance = GET_BALANCE(aux);
+	if (balance > 1 && GET_BALANCE(aux->left) >= 0) {
+		return rightRotate(aux);
+	}
+	if (balance > 1 && GET_BALANCE(aux->left) < 0) {
+		aux->left = leftRotate(aux->left);
+		return rightRotate(aux);
+	}
+	if (balance < -1 && GET_BALANCE(aux->right) <= 0) {
+		return leftRotate(aux);
+	}
+	if (balance < -1 && GET_BALANCE(aux->right) > 0) {
+		aux->right = rightRotate(aux->right);
+		return leftRotate(aux);
 	}
 	return aux;
 }
@@ -356,25 +382,6 @@ Nodo *BUSCAR(Nodo *aux, char *cui) {
 	return NULL;
 }
 
-Nodo *BUSCAR_DNI(Nodo *aux, int dni) {
-	//func: Busca un cliente usando como dato de busqueda su DNI
-	//pre: raiz del arbol y el dni
-	//pos: raiz del arbol
-	if(aux == NULL) {
-		return NULL;
-	}
-	if(dni == aux->cli.dni) {
-		return aux;
-	}
-	else if(dni < aux->cli.dni) {
-		return BUSCAR_DNI(aux->left, dni);
-	}
-	else if(dni > aux->cli.dni) {
-		return BUSCAR_DNI(aux->right, dni);
-	}
-	return NULL;
-}
-
 int EDITAR_CLIENTE(Nodo *tree, plan *planes){
 	//func: edicion de un cliente del arbol
 	//pre: raiz del arbol, la lista de planes
@@ -387,10 +394,10 @@ int EDITAR_CLIENTE(Nodo *tree, plan *planes){
 	}
 	do {
 		opc = 't';
-		printf("Ingrese el DNI o CUIT/CUIL de un cliente para editarlo: ");
+		printf("Ingrese el CUIT/CUIL de un cliente para editarlo: ");
 		fflush(stdin);
 		scanf("%s", dato);
-		if(strlen(dato) != 11 && strlen(dato) != 8 && strlen(dato) != 7) {
+		if(strlen(dato) != 11) {
 			printf("\nERROR: Ingreso no valido\n");
 			opc = 'f';
 			PAUSE();
@@ -406,12 +413,7 @@ int EDITAR_CLIENTE(Nodo *tree, plan *planes){
 			}
 		}
 	} while(opc == 'f');
-	if(strlen(dato) == 8 || strlen(dato) == 7) {
-		nodocli = BUSCAR_DNI(tree,atoi(dato));
-	}
-	else {
-		nodocli = BUSCAR(tree,dato);
-	}
+	nodocli = BUSCAR(tree,dato);
 	if(nodocli == NULL) {
 		printf("\nNo se encontro el cliente\n");
 		return 1;
@@ -691,10 +693,10 @@ int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
 	}
 	do {
 		opc = 't';
-		printf("Ingrese el DNI o CUIT/CUIL de un cliente para eliminarlo: ");
+		printf("Ingrese el CUIT/CUIL de un cliente para eliminarlo: ");
 		fflush(stdin);
 		scanf("%s", key);
-		if(strlen(key) != 11 && strlen(key) != 8 && strlen(key) != 7) {
+		if(strlen(key) != 11) {
 			printf("\nERROR: Ingreso no valido\n");
 			opc = 'f';
 			PAUSE();
@@ -710,23 +712,11 @@ int ELIMINAR_CLIENTE(Nodo *tree,int *band) {
 			}
 		}
 	} while(opc == 'f');
-	if(strlen(key) == 8 || strlen(key) == 7) {
-		Nodo *aux = BUSCAR_DNI(tree,atoi(key));
-		if(aux == NULL) {
-			printf("\nNo se encontro el cliente\n");
-			PAUSE();
-			(*band)=0;
-			return 1;
-		}
-		strcpy(key, aux->cli.cuit);
-	}
-	else {
-		if(BUSCAR(tree,key) == NULL) {
-			printf("\nNo se encontro el cliente\n");
-			PAUSE();
-			(*band)=0;
-			return 1;
-		}
+	if(BUSCAR(tree,key) == NULL) {
+		printf("\nNo se encontro el cliente\n");
+		PAUSE();
+		(*band)=0;
+		return 1;
 	}
 	tree = REMOVEN(tree,key);
 	return 0;
@@ -924,23 +914,16 @@ Nodo *ELIMINAR_MORADORES(Nodo *root, char *mesaux) {
 	//func: elimina aquellos clientes que son moradores
 	//pre: raiz del arbol, y un arreglo de caracteres del dia
 	//pos: raiz del arbol
-	char fechapago[11];
-	int band = 0;
-	do {
-		if(root == NULL){
-			return NULL;
-		}
-		time_ttoa(root->cli.fechaUltPago,fechapago,sizeof(fechapago));
-		if(fechapago[3] != mesaux[0] || fechapago[4] != mesaux[1]){
-			root = REMOVEN(root,root->cli.cuit);
-			band = 1;
-		}
-	} while(band);
-	if(root != NULL) {
-	root->left = ELIMINAR_MORADORES(root->left, mesaux);
+	if(root == NULL){
+		return NULL;
 	}
-	if(root != NULL) {
+	root->left = ELIMINAR_MORADORES(root->left, mesaux);
 	root->right = ELIMINAR_MORADORES(root->right, mesaux);
+	char fechapago[11];
+	time_ttoa(root->cli.fechaUltPago,fechapago,sizeof(fechapago));
+	if(fechapago[3] != mesaux[0] || fechapago[4] != mesaux[1]){
+		Nodo *temp = REMOVEN(root,root->cli.cuit);
+		return temp;
 	}
 	return root;	
 }
@@ -984,4 +967,14 @@ if(!ELIMINAR_CLIENTE(Clientes,&(*band))) {
 	}
 }
 return Clientes;
+}
+
+void LIMPIAR_ARBOL(Nodo *aux) {
+	if (aux == NULL) {
+		return;
+	}
+	LIMPIAR_ARBOL(aux->left);
+	LIMPIAR_ARBOL(aux->right);
+	FREECLI(aux);
+	free(aux);
 }

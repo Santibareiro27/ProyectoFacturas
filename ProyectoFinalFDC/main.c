@@ -108,16 +108,18 @@ int GUARDAR_CONFIG() {
 
 void MOD_RECARGO() {
 	//funct: modifica el recargo por mora
+	int rec;
 	do {
 		printf("\nPorcentaje de recargo por mora actual: %d", Recargo);
 		printf("\nIngrese el nuevo porcentaje de recargo: ");
-		if(scanf("%d", &Recargo) == 0) {
-			Recargo = -1;
+		if(scanf("%d", &rec) == 0) {
+			rec = -1;
 		}
-		if(Recargo < 1 || Recargo > 100) {
+		if(rec < 1 || rec > 100) {
 			printf("\nERROR: Ingreso no valido\n");
 		}
-	} while(Recargo < 1 || Recargo > 100);
+	} while(rec < 1 || rec > 100);
+	Recargo = rec;
 	if(GUARDAR_CONFIG()) {
 		CARGAR_CONFIG();
 	}
@@ -218,11 +220,12 @@ void GEN_FACT(Nodo *tree, time_t moratime, char *mescliente) {
 			fprintf(arch,"|\n");
 			//datos de cliente
 			char completo[200];
-			if(strcmp(tree->cli.iva,"ri") == 0 || strcmp(tree->cli.iva,"mt") == 0) {
+			if(tree->cli.dni == 0) {
 				strcpy(completo,tree->cli.nombre);
 			}
 			else {
 				strcpy(completo,tree->cli.apellido);
+				printf("\n%s",completo);
 				strcat(completo," ");
 				strcat(completo,tree->cli.nombre);
 			}
@@ -651,9 +654,7 @@ int main() {
 		case 's':
 		case 'S':
 			LIMPIAR_PLANES(&Planes);
-			while(Clientes!=NULL){
-				Clientes=REMOVEN(Clientes,Clientes->cli.cuit);		
-			}
+			LIMPIAR_ARBOL(Clientes);
 			return 0;
 			
 		default:
